@@ -1,0 +1,38 @@
+{
+  "identifier": "demo_seq",
+  "description": "User provided sequence (demo_seq)",
+  "sequence": "AUGGCUACGUU",
+  "annotations": {
+    "length": 11,
+    "gc_content": 0.45454545454545453,
+    "au_ratio": 0.5454545454545454,
+    "metadata": {
+      "source": "user"
+    }
+  },
+  "structure": {
+    "dot_bracket": "((.(...))).",
+    "base_pairs": [
+      [
+        0,
+        9
+      ],
+      [
+        1,
+        8
+      ],
+      [
+        3,
+        7
+      ]
+    ],
+    "stability_score": 1.1,
+    "metrics": {
+      "length": 11.0,
+      "gc_content": 0.45454545454545453,
+      "paired_fraction": 0.5454545454545454,
+      "loop_count": 3.0
+    }
+  },
+  "generated_at": "2026-01-21T17:02:59.153437Z"
+}
