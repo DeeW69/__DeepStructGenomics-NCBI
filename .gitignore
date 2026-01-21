@@ -1,0 +1,29 @@
+# Byte-compiled / cache directories
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Tool caches / logs
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Local configuration and secrets
+.env
+.env.*
+
+# Editor / OS files
+.DS_Store
+Thumbs.db
+
+# Project-specific artifacts
+outputs/
+outputs_*/
+data/cache/
+data/raw/
+
