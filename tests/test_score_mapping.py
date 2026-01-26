@@ -10,6 +10,8 @@ import pytest
 from deepstructgenomics.visualization.io_structures import AtomRecord, MolecularStructure, ResidueKey
 from deepstructgenomics.visualization.score_mapping import (
     ScoreTable,
+    compute_delta_scores,
+    compute_score_statistics,
     load_score_table,
     map_scores_to_atoms,
     write_score_table,
@@ -63,3 +65,34 @@ def test_score_table_validation(tmp_path):
     invalid_path.write_text('{"position_scores": []}', encoding="utf-8")
     with pytest.raises(ValueError):
         load_score_table(invalid_path)
+
+
+def test_compute_delta_scores_with_positions():
+    wt = ScoreTable(position_scores={1: 0.2, 2: 0.4}, metadata={"reference_identifier": "ref"})
+    mut = ScoreTable(position_scores={1: 0.6, 2: -0.5}, metadata={"reference_identifier": "ref"})
+    delta = compute_delta_scores(wt, mut)
+    assert delta.position_scores[1] == pytest.approx(0.4)
+    # clamped to [-1,1]
+    assert delta.position_scores[2] == pytest.approx(-0.9)
+    assert delta.metadata["position_overlap"] == 2
+    assert delta.metadata["strategy"] == "position_first"
+    assert delta.metadata["clamp_min"] == pytest.approx(-1.0)
+    assert delta.metadata["clamp_max"] == pytest.approx(1.0)
+
+
+def test_map_scores_supports_negative_range(tmp_path):
+    structure = _dummy_structure(tmp_path)
+    scores = ScoreTable(position_scores={1: -0.6, 2: 0.8}, metadata={})
+    scalars = map_scores_to_atoms(structure, scores, clamp_min=-1.0, clamp_max=1.0)
+    assert pytest.approx(scalars[0]) == -0.6
+    assert pytest.approx(scalars[1]) == 0.8
+
+
+def test_compute_score_statistics_handles_signs():
+    scores = ScoreTable(position_scores={1: -0.5, 2: 0.0, 3: 0.7}, metadata={})
+    stats = compute_score_statistics(scores)
+    assert stats["scalar_min"] == pytest.approx(-0.5)
+    assert stats["scalar_max"] == pytest.approx(0.7)
+    assert stats["nonzero_ratio"] == pytest.approx(2 / 3)
+    assert stats["positive_ratio"] == pytest.approx(1 / 3)
+    assert stats["negative_ratio"] == pytest.approx(1 / 3)

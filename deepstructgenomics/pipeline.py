@@ -25,6 +25,8 @@ from deepstructgenomics.visualization.io_structures import (
 )
 from deepstructgenomics.visualization.score_mapping import (
     ScoreTable,
+    compute_delta_scores,
+    compute_score_statistics,
     derive_position_scores_from_structure,
     write_score_table,
 )
@@ -66,8 +68,13 @@ class VisualizationArtifactPaths:
     root_dir: Path
     wt_structure: Optional[Path]
     mutant_structure: Optional[Path]
-    score_file: Optional[Path]
+    wt_score_file: Optional[Path]
+    mutant_score_file: Optional[Path]
     manifest_path: Optional[Path]
+
+    @property
+    def score_file(self) -> Optional[Path]:  # backward-compatible alias
+        return self.mutant_score_file
 
 
 class DeepStructPipeline:
@@ -160,29 +167,43 @@ class DeepStructPipeline:
             viz_dir / "wt_structure.pdb",
         )
 
+        wt_position_scores = derive_position_scores_from_structure(result.structure)
+        wt_residue_scores = {f"A:{idx}:": value for idx, value in wt_position_scores.items()}
+        wt_table = ScoreTable(
+            position_scores=wt_position_scores,
+            residue_scores=wt_residue_scores,
+            metadata={"context": "reference", "reference_identifier": result.sequence_record.identifier},
+        )
+        wt_score_path = write_score_table(viz_dir / "wt_scores.json", wt_table)
+        wt_stats = compute_score_statistics(wt_table)
+
         mutant_structure_path: Optional[Path] = None
-        score_context = "reference"
-        score_source = result.structure
+        mutant_score_path: Optional[Path] = None
+        mutant_stats: Optional[Dict[str, float]] = None
+        delta_stats: Optional[Dict[str, float]] = None
+        delta_range_mode: Optional[str] = None
 
         if result.mutant_structure and result.mutant_sequence:
             mutant_structure_path = export_sequence_as_pseudo_pdb(
                 result.mutant_structure.sequence,
                 viz_dir / "mutant_structure.pdb",
             )
-            score_context = "mutant"
-            score_source = result.mutant_structure
+            mut_position_scores = derive_position_scores_from_structure(result.mutant_structure)
+            mut_residue_scores = {f"A:{idx}:": value for idx, value in mut_position_scores.items()}
+            mutant_table = ScoreTable(
+                position_scores=mut_position_scores,
+                residue_scores=mut_residue_scores,
+                metadata={"context": "mutant", "reference_identifier": result.sequence_record.identifier},
+            )
+            mutant_score_path = write_score_table(viz_dir / "mutant_scores.json", mutant_table)
+            mutant_stats = compute_score_statistics(mutant_table)
 
-        position_scores = derive_position_scores_from_structure(score_source)
-        residue_scores = {f"A:{idx}:": value for idx, value in position_scores.items()}
-        score_table = ScoreTable(
-            position_scores=position_scores,
-            residue_scores=residue_scores,
-            metadata={
-                "context": score_context,
-                "reference_identifier": result.sequence_record.identifier,
-            },
-        )
-        score_file = write_score_table(viz_dir / "mutant_scores.json", score_table)
+            delta_table = compute_delta_scores(wt_table, mutant_table)
+            delta_stats = compute_score_statistics(delta_table)
+            delta_range_mode = "dynamic_symmetric"
+        else:
+            # maintain backward compatibility by keeping a mutant_scores.json identical to WT
+            mutant_score_path = write_score_table(viz_dir / "mutant_scores.json", wt_table)
 
         manifest_path = write_visualization_manifest(
             viz_dir / "visualization_manifest.json",
@@ -190,18 +211,24 @@ class DeepStructPipeline:
             source=result.sequence_record.metadata.get("source", "NCBI"),
             parameters={
                 "generated_at": result.generated_at.replace(tzinfo=None).isoformat() + "Z",
-                "score_context": score_context,
+                "score_context": "reference",
                 "note": "Projection 3D contrainte derivee de la structure secondaire.",
+                "score_statistics_wt": wt_stats,
+                "score_statistics_mutant": mutant_stats,
+                "score_statistics_delta": delta_stats,
+                "delta_range_mode": delta_range_mode,
             },
             wt_structure=wt_structure_path,
             mutant_structure=mutant_structure_path,
-            score_file=score_file,
+            wt_score_file=wt_score_path,
+            mutant_score_file=mutant_score_path,
         )
 
         return VisualizationArtifactPaths(
             root_dir=viz_dir,
             wt_structure=wt_structure_path,
             mutant_structure=mutant_structure_path,
-            score_file=score_file,
+            wt_score_file=wt_score_path,
+            mutant_score_file=mutant_score_path,
             manifest_path=manifest_path,
         )

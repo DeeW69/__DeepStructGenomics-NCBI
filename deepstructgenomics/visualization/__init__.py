@@ -12,6 +12,8 @@ from .io_structures import (
 )
 from .score_mapping import (
     ScoreTable,
+    compute_delta_scores,
+    compute_score_statistics,
     derive_position_scores_from_structure,
     load_score_table,
     map_scores_to_atoms,
@@ -23,6 +25,8 @@ __all__ = [
     "MolecularStructure",
     "ResidueKey",
     "ScoreTable",
+    "compute_delta_scores",
+    "compute_score_statistics",
     "derive_position_scores_from_structure",
     "load_score_table",
     "load_structure",

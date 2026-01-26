@@ -6,7 +6,7 @@ import json
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 from Bio.PDB import MMCIFParser, PDBParser
@@ -177,10 +177,11 @@ def write_visualization_manifest(
     *,
     identifier: str,
     source: str,
-    parameters: Dict[str, str],
+    parameters: Dict[str, object],
     wt_structure: Optional[Path],
     mutant_structure: Optional[Path],
-    score_file: Optional[Path],
+    wt_score_file: Optional[Path],
+    mutant_score_file: Optional[Path],
 ) -> Path:
     """Write the manifest describing visualization artifacts."""
 
@@ -189,7 +190,8 @@ def write_visualization_manifest(
         "source": source,
         "wt_structure": str(wt_structure) if wt_structure else None,
         "mutant_structure": str(mutant_structure) if mutant_structure else None,
-        "score_file": str(score_file) if score_file else None,
+        "wt_score_file": str(wt_score_file) if wt_score_file else None,
+        "mutant_score_file": str(mutant_score_file) if mutant_score_file else None,
         "parameters": parameters,
     }
     manifest_path = Path(path)
