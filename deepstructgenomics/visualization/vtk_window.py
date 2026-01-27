@@ -29,6 +29,7 @@ class VTKStandaloneWindow:
         post_setup: Optional[Callable[[vtkRenderer, vtkRenderWindow, vtkRenderWindowInteractor], None]] = None,
         export_path: Optional[str | Path] = None,
         export_only: bool = False,
+        export_scale: int = 1,
     ) -> None:
         renderer = vtkRenderer()
         renderer.SetBackground(0.05, 0.05, 0.1)
@@ -49,7 +50,7 @@ class VTKStandaloneWindow:
         render_window.Render()
 
         if export_path:
-            self.export_png(render_window, Path(export_path))
+            self.export_png(render_window, Path(export_path), export_scale=export_scale)
             if export_only:
                 return
 
@@ -57,12 +58,14 @@ class VTKStandaloneWindow:
         interactor.Start()
 
     @staticmethod
-    def export_png(render_window: vtkRenderWindow, output_path: Path) -> None:
+    def export_png(render_window: vtkRenderWindow, output_path: Path, *, export_scale: int = 1) -> None:
         """Capture the current render window into a PNG image."""
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
         w2i = vtkWindowToImageFilter()
         w2i.SetInput(render_window)
+        scale = max(1, int(export_scale))
+        w2i.SetScale(scale, scale, 1)
         w2i.Update()
 
         writer = vtkPNGWriter()

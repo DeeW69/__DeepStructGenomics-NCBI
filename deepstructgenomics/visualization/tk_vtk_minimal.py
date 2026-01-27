@@ -41,5 +41,16 @@ class MinimalVTKViewer:
 
         renderer.SetBackground(0.05, 0.05, 0.1)
 
-    def start(self, *, export_path: Optional[str | Path] = None, export_only: bool = False) -> None:
-        self.window.run(self._build_scene, export_path=export_path, export_only=export_only)
+    def start(
+        self,
+        *,
+        export_path: Optional[str | Path] = None,
+        export_only: bool = False,
+        export_scale: int = 1,
+    ) -> None:
+        self.window.run(
+            self._build_scene,
+            export_path=export_path,
+            export_only=export_only,
+            export_scale=export_scale,
+        )

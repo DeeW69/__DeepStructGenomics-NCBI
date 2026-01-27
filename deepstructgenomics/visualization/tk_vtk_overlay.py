@@ -62,12 +62,19 @@ class OverlayBase:
         self._tooltip_payload: Optional[Dict[str, object]] = None
         self._interaction_actor: Optional[vtkActor] = None
 
-    def start(self, *, export_path: Optional[str | Path] = None, export_only: bool = False) -> None:
+    def start(
+        self,
+        *,
+        export_path: Optional[str | Path] = None,
+        export_only: bool = False,
+        export_scale: int = 1,
+    ) -> None:
         self.window.run(
             self._build_scene,
             post_setup=self._post_setup if self.enable_tooltip else None,
             export_path=export_path,
             export_only=export_only,
+            export_scale=export_scale,
         )
 
     def _build_scene(self, renderer: vtkRenderer) -> None:  # pragma: no cover - abstract
