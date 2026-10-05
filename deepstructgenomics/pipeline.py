@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Sequence, Tuple
 
+from deepstructgenomics.analysis.impact_summary import build_impact_summary
 from deepstructgenomics.config import PipelineConfig
 from deepstructgenomics.data_sources.ncbi_client import (
     NCBIClient,
@@ -21,8 +23,10 @@ from deepstructgenomics.rna.secondary_structure import (
 from deepstructgenomics.variants.variant_analysis import VariantImpactResult, compare_sequences
 from deepstructgenomics.visualization.io_structures import (
     export_sequence_as_pseudo_pdb,
+    generate_coarse_backbone,
     write_visualization_manifest,
 )
+from deepstructgenomics.visualization.overlay_helpers import compute_displacements, summarize_displacements
 from deepstructgenomics.visualization.score_mapping import (
     ScoreTable,
     compute_delta_scores,
@@ -59,6 +63,7 @@ class PipelineResult:
     generated_at: datetime
     report_paths: Optional[ReportPaths] = None
     visualization_paths: Optional["VisualizationArtifactPaths"] = None
+    impact_summary: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -71,6 +76,7 @@ class VisualizationArtifactPaths:
     wt_score_file: Optional[Path]
     mutant_score_file: Optional[Path]
     manifest_path: Optional[Path]
+    impact_summary_file: Optional[Path] = None
 
     @property
     def score_file(self) -> Optional[Path]:  # backward-compatible alias
@@ -107,15 +113,17 @@ class DeepStructPipeline:
             )
             mutant_sequence = mutant.sequence
 
-        return PipelineResult(
+        result = PipelineResult(
             sequence_record=sequence_record,
             annotations=annotations,
             structure=structure,
             variant_result=variant_result,
             mutant_sequence=mutant_sequence,
             mutant_structure=mutant_structure,
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc),
         )
+        result.impact_summary = self._summarize_impact(result)
+        return result
 
     def run_and_export(self, request: PipelineInput, output_dir: Optional[Path] = None) -> PipelineResult:
         """Runs the pipeline then writes JSON/Markdown reports."""
@@ -134,6 +142,35 @@ class DeepStructPipeline:
             return self.ncbi_client.fetch_sequence(request.accession)
         assert request.sequence is not None
         return normalize_user_sequence(request.sequence, request.sequence_label)
+
+    @staticmethod
+    def _summarize_impact(result: PipelineResult) -> Dict[str, Any]:
+        """Compute one summary shared by the reports and visualization bundle."""
+
+        delta_scores: Dict[int, float] = {}
+        base_pair_sets: Dict[str, Sequence[Tuple[int, int]]] = {
+            "wt": [(i + 1, j + 1) for i, j in result.structure.base_pairs],
+        }
+        note = "mutant not provided"
+        if result.mutant_structure is not None:
+            wt_scores = ScoreTable(position_scores=derive_position_scores_from_structure(result.structure))
+            mutant_scores = ScoreTable(position_scores=derive_position_scores_from_structure(result.mutant_structure))
+            delta_scores = compute_delta_scores(wt_scores, mutant_scores).position_scores
+            base_pair_sets["mutant"] = [(i + 1, j + 1) for i, j in result.mutant_structure.base_pairs]
+            note = None if delta_scores else "delta scores unavailable"
+            if len(result.structure.sequence) != len(result.mutant_structure.sequence):
+                note = "different sequence lengths; positional comparison without alignment"
+
+        return build_impact_summary(
+            result.sequence_record.identifier,
+            result.generated_at,
+            delta_scores,
+            top_k=10,
+            min_abs_delta=0.1,
+            note=note,
+            base_pairs=base_pair_sets,
+            base_pair_threshold=0.2,
+        )
 
     @staticmethod
     def _annotate_sequence(record: SequenceRecord) -> Dict[str, Any]:
@@ -182,7 +219,7 @@ class DeepStructPipeline:
         mutant_stats: Optional[Dict[str, float]] = None
         delta_stats: Optional[Dict[str, float]] = None
         delta_range_mode: Optional[str] = None
-
+        displacement_stats: Optional[Dict[str, float]] = None
         if result.mutant_structure and result.mutant_sequence:
             mutant_structure_path = export_sequence_as_pseudo_pdb(
                 result.mutant_structure.sequence,
@@ -201,9 +238,22 @@ class DeepStructPipeline:
             delta_table = compute_delta_scores(wt_table, mutant_table)
             delta_stats = compute_score_statistics(delta_table)
             delta_range_mode = "dynamic_symmetric"
+
+            wt_coords = generate_coarse_backbone(result.structure.sequence)
+            mut_coords = generate_coarse_backbone(result.mutant_structure.sequence)
+            max_len = min(len(wt_coords), len(mut_coords))
+            if max_len:
+                mapping = {idx + 1: (idx, idx) for idx in range(max_len)}
+                distances = compute_displacements(wt_coords, mut_coords, mapping)
+                displacement_stats = summarize_displacements(distances)
         else:
             # maintain backward compatibility by keeping a mutant_scores.json identical to WT
             mutant_score_path = write_score_table(viz_dir / "mutant_scores.json", wt_table)
+        impact_summary_path = viz_dir / "impact_summary.json"
+        impact_summary_path.write_text(
+            json.dumps(result.impact_summary, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
 
         manifest_path = write_visualization_manifest(
             viz_dir / "visualization_manifest.json",
@@ -217,11 +267,13 @@ class DeepStructPipeline:
                 "score_statistics_mutant": mutant_stats,
                 "score_statistics_delta": delta_stats,
                 "delta_range_mode": delta_range_mode,
+                "displacement_statistics": displacement_stats,
             },
             wt_structure=wt_structure_path,
             mutant_structure=mutant_structure_path,
             wt_score_file=wt_score_path,
             mutant_score_file=mutant_score_path,
+            impact_summary_file=impact_summary_path,
         )
 
         return VisualizationArtifactPaths(
@@ -231,4 +283,5 @@ class DeepStructPipeline:
             wt_score_file=wt_score_path,
             mutant_score_file=mutant_score_path,
             manifest_path=manifest_path,
+            impact_summary_file=impact_summary_path,
         )

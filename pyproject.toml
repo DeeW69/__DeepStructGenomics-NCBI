@@ -1,13 +1,13 @@
 [build-system]
-requires = ["setuptools>=65", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "deepstructgenomics-ncbi"
-version = "0.1.0"
+version = "0.2.0"
 description = "Pipeline ARN/genomique reliant sequence -> structure -> impact a partir des donnees NCBI."
 authors = [
-  {name = "DeepStructGenomics Team"}
+  {name = "DeeW69"}
 ]
 readme = "README.md"
 requires-python = ">=3.10"
@@ -17,7 +17,11 @@ dependencies = [
   "biopython>=1.83",
   "vtk>=9.2"
 ]
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICENSE"]
 
 [project.urls]
-homepage = "https://github.com/DeepStructGenomics/DeepStructGenomics-NCBI"
+homepage = "https://github.com/DeeW69/__DeepStructGenomics-NCBI"
+
+[tool.setuptools.packages.find]
+include = ["deepstructgenomics*"]

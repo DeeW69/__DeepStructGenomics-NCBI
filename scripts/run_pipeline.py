@@ -45,6 +45,8 @@ def main() -> None:
     print("Rapports generes :")
     print(f"- JSON     : {result.report_paths.json_path}")
     print(f"- Markdown : {result.report_paths.markdown_path}")
+    if result.visualization_paths and result.visualization_paths.impact_summary_file:
+        print(f"- Impact   : {result.visualization_paths.impact_summary_file}")
 
 
 if __name__ == "__main__":

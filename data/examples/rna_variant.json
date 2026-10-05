@@ -1,0 +1,6 @@
+{
+  "identifier": "offline_demo",
+  "description": "Exemple ARN synthetique de 12 nucleotides : substitution C12A, positions depuis 1. Aucune accession NCBI ni donnee patient.",
+  "reference_sequence": "GGGGAAAACCCC",
+  "mutant_sequence": "GGGGAAAACCCA"
+}
