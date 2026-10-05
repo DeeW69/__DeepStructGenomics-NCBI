@@ -152,7 +152,7 @@ def export_sequence_as_pseudo_pdb(
         atom_name = "P"
         resseq = idx
         lines.append(
-            "ATOM  {serial:5d} {name:<4}{resname:>3} {chain:1s}{resseq:4d}    "
+            "ATOM  {serial:5d} {name:^4} {resname:>3} {chain:1s}{resseq:4d}    "
             "{x:8.3f}{y:8.3f}{z:8.3f}{occ:6.2f}{bfactor:6.2f}          {element:>2s}".format(
                 serial=idx,
                 name=atom_name,
@@ -182,6 +182,7 @@ def write_visualization_manifest(
     mutant_structure: Optional[Path],
     wt_score_file: Optional[Path],
     mutant_score_file: Optional[Path],
+    impact_summary_file: Optional[Path] = None,
 ) -> Path:
     """Write the manifest describing visualization artifacts."""
 
@@ -192,6 +193,7 @@ def write_visualization_manifest(
         "mutant_structure": str(mutant_structure) if mutant_structure else None,
         "wt_score_file": str(wt_score_file) if wt_score_file else None,
         "mutant_score_file": str(mutant_score_file) if mutant_score_file else None,
+        "impact_summary_file": str(impact_summary_file) if impact_summary_file else None,
         "parameters": parameters,
     }
     manifest_path = Path(path)

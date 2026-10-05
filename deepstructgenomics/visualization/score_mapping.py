@@ -226,4 +226,92 @@ def compute_delta_scores(
         "clamp_min": clamp_min,
         "clamp_max": clamp_max,
     }
-    return ScoreTable(residue_scores=delta_residues, position_scores=delta_positions, metadata=metadata, version=wt_scores.version)
+    return ScoreTable(
+        residue_scores=delta_residues,
+        position_scores=delta_positions,
+        metadata=metadata,
+        version=wt_scores.version,
+    )
+
+
+def detect_hotspots(
+    delta_scores: ScoreTable,
+    *,
+    abs_threshold: float = 0.2,
+    min_run: int = 3,
+) -> list[Dict[str, float]]:
+    """Return contiguous regions where |delta| >= threshold."""
+
+    if abs_threshold <= 0:
+        raise ValueError("abs_threshold doit etre > 0.")
+    min_run = max(1, int(min_run))
+    positions = sorted(delta_scores.position_scores.items())
+    hotspots: list[Dict[str, float]] = []
+    current_run: list[Tuple[int, float]] = []
+
+    def flush() -> None:
+        nonlocal current_run
+        if len(current_run) >= min_run:
+            start = current_run[0][0]
+            end = current_run[-1][0]
+            values = [val for _, val in current_run]
+            mean_abs = float(np.mean([abs(val) for val in values]))
+            mean_delta = float(np.mean(values))
+            hotspots.append(
+                {
+                    "start": start,
+                    "end": end,
+                    "length": int(end - start + 1),
+                    "mean_abs_delta": mean_abs,
+                    "mean_delta": mean_delta,
+                }
+            )
+        current_run = []
+
+    last_pos: Optional[int] = None
+    for pos, value in positions:
+        if abs(value) >= abs_threshold:
+            if current_run and last_pos is not None and pos != last_pos + 1:
+                flush()
+            current_run.append((pos, value))
+        else:
+            flush()
+        last_pos = pos
+    flush()
+    return hotspots
+
+
+def summarize_deltas(
+    delta_scores: ScoreTable,
+    *,
+    abs_threshold: float = 0.2,
+    top_k: int = 10,
+) -> Dict[str, object]:
+    """Return summary statistics and hotspots for delta scores."""
+
+    positions = delta_scores.position_scores
+    if not positions:
+        return {
+            "max_abs_delta": 0.0,
+            "mean_abs_delta": 0.0,
+            "pct_positions_over_threshold": 0.0,
+            "top_positions": [],
+            "hotspots": [],
+        }
+
+    values = np.array(list(positions.values()), dtype=float)
+    abs_values = np.abs(values)
+    over_threshold = (abs_values >= abs_threshold).sum()
+
+    sorted_positions = sorted(positions.items(), key=lambda item: abs(item[1]), reverse=True)
+    top_positions = [
+        {"position": pos, "delta": float(val)} for pos, val in sorted_positions[: max(1, top_k)]
+    ]
+
+    return {
+        "max_abs_delta": float(abs_values.max()),
+        "mean_abs_delta": float(abs_values.mean()),
+        "pct_positions_over_threshold": float(over_threshold / len(values)),
+        "top_positions": top_positions,
+        "hotspots": detect_hotspots(delta_scores, abs_threshold=abs_threshold),
+    }

@@ -47,10 +47,16 @@ class MinimalVTKViewer:
         export_path: Optional[str | Path] = None,
         export_only: bool = False,
         export_scale: int = 1,
+        export_view: str = "auto",
+        export_hide_ui: bool = False,
+        export_background: str = "dark",
     ) -> None:
         self.window.run(
             self._build_scene,
             export_path=export_path,
             export_only=export_only,
             export_scale=export_scale,
+            export_view=export_view,
+            export_hide_ui=export_hide_ui,
+            export_background=export_background,
         )

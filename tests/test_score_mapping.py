@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Dict
 
 import numpy as np
 import pytest
@@ -12,8 +13,10 @@ from deepstructgenomics.visualization.score_mapping import (
     ScoreTable,
     compute_delta_scores,
     compute_score_statistics,
+    detect_hotspots,
     load_score_table,
     map_scores_to_atoms,
+    summarize_deltas,
     write_score_table,
 )
 
@@ -96,3 +99,25 @@ def test_compute_score_statistics_handles_signs():
     assert stats["nonzero_ratio"] == pytest.approx(2 / 3)
     assert stats["positive_ratio"] == pytest.approx(1 / 3)
     assert stats["negative_ratio"] == pytest.approx(1 / 3)
+
+
+def _delta_table(values: Dict[int, float]) -> ScoreTable:
+    return ScoreTable(position_scores=values, metadata={"context": "delta"})
+
+
+def test_detect_hotspots_threshold_and_min_run():
+    table = _delta_table({1: 0.4, 2: 0.5, 3: 0.1, 4: -0.35, 5: -0.45, 10: 0.9})
+    hotspots = detect_hotspots(table, abs_threshold=0.3, min_run=2)
+    assert len(hotspots) == 2
+    assert hotspots[0]["start"] == 1 and hotspots[0]["end"] == 2
+    assert pytest.approx(hotspots[0]["mean_abs_delta"], rel=1e-3) == 0.45
+    assert hotspots[1]["start"] == 4 and hotspots[1]["end"] == 5
+
+
+def test_summarize_deltas_includes_top_positions_and_hotspots():
+    table = _delta_table({1: -0.6, 2: 0.05, 3: 0.9, 4: 0.2})
+    summary = summarize_deltas(table, abs_threshold=0.2, top_k=2)
+    assert summary["max_abs_delta"] == pytest.approx(0.9)
+    assert summary["pct_positions_over_threshold"] == pytest.approx(0.75)
+    assert len(summary["top_positions"]) == 2
+    assert summary["hotspots"] == []

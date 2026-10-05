@@ -4,7 +4,26 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from deepstructgenomics.visualization.io_structures import load_structure
+import numpy as np
+
+from deepstructgenomics.visualization.io_structures import (
+    export_sequence_as_pseudo_pdb,
+    generate_coarse_backbone,
+    load_structure,
+)
+
+
+def test_pseudo_pdb_round_trip_preserves_residue_keys_and_coordinates(tmp_path):
+    sequence = "AUGC"
+    path = export_sequence_as_pseudo_pdb(sequence, tmp_path / "export.pdb", chain_id="B")
+    structure = load_structure(path)
+
+    assert [atom.residue_key.as_compact() for atom in structure.atoms] == [
+        "B:1:", "B:2:", "B:3:", "B:4:",
+    ]
+    assert all(atom.residue_name == "NTP" and atom.name == "P" for atom in structure.atoms)
+    assert all(atom.element == "P" for atom in structure.atoms)
+    np.testing.assert_allclose(structure.as_numpy(), generate_coarse_backbone(sequence), atol=0.00051)
 
 
 def test_load_structure_from_pdb(tmp_path):
