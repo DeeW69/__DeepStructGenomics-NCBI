@@ -2,6 +2,23 @@
 
 ## 0.2.0 — en préparation
 
+### Entrées FASTA et validation
+
+- Options `--fasta` et `--mutant-fasta` pour charger une référence et un mutant
+  depuis des fichiers locaux contenant chacun une seule séquence.
+- Lecture des séquences réparties sur plusieurs lignes, des minuscules et des
+  espaces ; conservation de l'identifiant, de la description et de la provenance
+  FASTA. L'option `--label` permet de nommer les sorties de la référence.
+- Exemples FASTA synthétiques fournis dans `data/examples/`, utilisables hors
+  ligne avec la CLI principale.
+- Normalisation ADN → ARN (`T` → `U`) appliquée aux séquences NCBI, directes et
+  FASTA avant les calculs et la comparaison référence/mutant.
+- **Compatibilité :** les caractères hors `A`, `C`, `G`, `T`, `U` (codes ambigus,
+  gaps, chiffres, etc.) déclenchent désormais une erreur indiquant leur position,
+  comptée depuis 1 sans les espaces. Ils ne sont plus supprimés silencieusement,
+  ce qui évite de décaler les positions analysées. Les séquences vides et les
+  fichiers FASTA mal formés ou contenant plusieurs séquences sont refusés.
+
 ### Comparaison référence/mutant
 
 - Résumé des variations par position dans le rapport Markdown : statistiques

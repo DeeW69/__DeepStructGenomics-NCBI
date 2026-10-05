@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict
@@ -19,11 +20,22 @@ class ReportPaths:
     markdown_path: Path
 
 
+def safe_output_stem(identifier: str) -> str:
+    """Keep a sequence identifier within one portable filename component."""
+
+    stem = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", identifier).rstrip(" .") or "sequence"
+    reserved = {"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$"}
+    reserved.update(f"{prefix}{number}" for prefix in ("COM", "LPT") for number in range(1, 10))
+    if stem.split(".", 1)[0].upper() in reserved:
+        stem = "_" + stem
+    return stem
+
+
 def export_report(result: "PipelineResult", output_dir: Path) -> ReportPaths:
     """Write JSON and Markdown representations to disk."""
 
     payload = _build_payload(result)
-    base_name = result.sequence_record.identifier.replace("|", "_")
+    base_name = safe_output_stem(result.sequence_record.identifier)
     json_path = output_dir / f"{base_name}.json"
     markdown_path = output_dir / f"{base_name}.md"
 

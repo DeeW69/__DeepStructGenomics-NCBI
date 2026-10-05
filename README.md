@@ -10,6 +10,10 @@ Les rapports Markdown affichent désormais les positions dont les scores changen
 le plus entre référence et mutant. Le même résumé est disponible dans le JSON
 du rapport et dans `visualization/impact_summary.json`.
 
+Le pipeline accepte aussi des fichiers FASTA pour la référence et le mutant.
+La validation des entrées préserve les positions : les caractères non pris en
+charge sont signalés et les séquences ADN sont converties en ARN (`T` → `U`).
+
 Après l'[installation](#installation-rapide), essayer la démo synthétique depuis
 la racine du dépôt, sous Windows, macOS ou Linux :
 
@@ -86,7 +90,8 @@ DeepStructGenomics-NCBI/
 Entrées possibles :
 
 1. Identifiant NCBI (nucléotidique, par ex. `NR_000027.1`).
-2. Séquence ARN fournie directement, accompagnée d'un nom ou d'un identifiant libre.
+2. Séquence ARN ou ADN fournie directement, accompagnée d'un nom ou d'un identifiant libre.
+3. Fichier FASTA local contenant une seule séquence ARN ou ADN.
 
 Sorties :
 
@@ -97,7 +102,7 @@ Sorties :
 
 ### Étapes principales
 
-1. **Récupération / normalisation** : téléchargement via E-utilities (NCBI) ou validation de la séquence fournie.
+1. **Récupération / normalisation** : téléchargement via E-utilities (NCBI), lecture FASTA ou validation de la séquence fournie ; conversion ADN → ARN.
 2. **Annotation simple** : calcul longueur, composition, GC%, heuristiques de fonctionnalités.
 3. **Prédiction de structure secondaire** : implémentation interne d'un algorithme type Nussinov avec matrice énergie simplifiée.
 4. **Analyse variant (optionnelle V1)** : si une séquence mutante est fournie, comparaison des structures prédites et estimation heuristique de l'impact.
@@ -151,6 +156,62 @@ python scripts/run_pipeline.py --sequence AUGGCUACG --label test_seq --output-di
 ```
 
 Les rapports `.json` et `.md` sont écrits dans le dossier de sortie, tandis que les artefacts de visualisation sont placés dans `outputs/<identifiant>/visualization/`.
+
+### Charger des fichiers FASTA
+
+Depuis la racine du dépôt, cette commande fonctionne sous Windows, macOS et
+Linux après installation des dépendances :
+
+```bash
+python scripts/run_pipeline.py --fasta data/examples/reference.fasta --mutant-fasta data/examples/mutant.fasta --output-dir outputs_fasta
+```
+
+Les deux fichiers contiennent les mêmes ARN synthétiques de 12 nucléotides que
+la démo : `GGGGAAAACCCC` et `GGGGAAAACCCA`. Le rapport est écrit dans
+`outputs_fasta/fasta_demo.md`, avec la substitution C12A et les positions 12 et 1
+en tête des variations de score. L'exécution est entièrement hors ligne.
+
+Chaque fichier doit contenir **une seule séquence**, précédée d'un en-tête
+commençant par `>`. Les séquences peuvent être réparties sur plusieurs lignes.
+Le premier mot de l'en-tête fournit l'identifiant ; `--label` permet de choisir
+un autre nom pour les sorties. La description et la provenance FASTA sont
+conservées dans le rapport JSON.
+
+Les caractères incompatibles avec un nom de fichier, notamment `/`, `\\` ou `:`,
+sont remplacés par `_` dans les noms de sortie. Les noms réservés sous Windows
+sont préfixés par `_`. L'identifiant original reste conservé dans les rapports.
+
+Pour les chemins contenant des espaces, utiliser des guillemets :
+
+```bash
+python scripts/run_pipeline.py --fasta "mes sequences/reference.fa" --mutant-fasta "mes sequences/mutant.fa" --label comparaison --output-dir "outputs/ma comparaison"
+```
+
+Les sources de référence `--accession`, `--sequence` et `--fasta` sont
+mutuellement exclusives. Pour la comparaison facultative, choisir
+`--mutant-sequence` ou `--mutant-fasta`. Il est possible de mélanger les formats,
+par exemple une référence NCBI et un mutant dans un fichier FASTA.
+
+### Validation des séquences
+
+Les mêmes règles s'appliquent à la référence et au mutant, qu'ils proviennent
+du NCBI, d'une chaîne fournie directement ou d'un fichier FASTA :
+
+- Les minuscules sont converties en majuscules ; les espaces (y compris les
+  espaces insécables), tabulations et retours à la ligne sont ignorés.
+- Les bases `A`, `C`, `G`, `T` et `U` sont acceptées. `T` est converti en `U`
+  avant les calculs et la comparaison : les versions ADN et ARN d'une même
+  séquence ne créent donc pas de substitutions artificielles.
+- Les codes ambigus (`N`, `R`, etc.), les gaps (`-`), les chiffres et les autres
+  caractères sont refusés, avec indication de leur position dans la séquence
+  sans espaces, comptée depuis 1. Ainsi, `AUGNC` signale `N` à la position 4.
+- Une séquence vide, un FASTA sans en-tête ou contenant plusieurs séquences
+  produit une erreur explicite.
+
+**Changement de compatibilité :** des entrées auparavant raccourcies
+silencieusement par suppression de caractères invalides sont désormais
+refusées. Corriger la séquence source avant de relancer l'analyse afin de
+conserver une correspondance fiable entre positions et résultats.
 
 ## Visualisation 3D contrainte
 

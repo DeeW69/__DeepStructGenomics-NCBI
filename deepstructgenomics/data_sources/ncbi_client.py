@@ -1,8 +1,9 @@
-"""Lightweight client to interact with the NCBI E-utilities."""
+"""NCBI client and validated RNA sequence inputs."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import requests
@@ -39,8 +40,8 @@ class NCBIClient:
                 "retmode": "text",
             },
         )
-        metadata = self._fetch_summary(accession)
         seq_id, description, sequence = self._parse_fasta(fasta_text)
+        metadata = self._fetch_summary(accession)
         return SequenceRecord(
             identifier=seq_id or accession,
             description=description or metadata.get("title", ""),
@@ -86,35 +87,70 @@ class NCBIClient:
         return response
 
     @staticmethod
-    def _parse_fasta(fasta_text: requests.Response | str):
-        """Parse the FASTA payload and return (identifier, description, sequence)."""
+    def _parse_fasta(fasta_text: requests.Response | str) -> tuple[str, str, str]:
+        """Parse one NCBI record with the same validation as local inputs."""
 
         text = fasta_text.text if isinstance(fasta_text, requests.Response) else fasta_text
-        lines = [line.strip() for line in text.splitlines() if line.strip()]
-        if not lines:
-            raise ValueError("FASTA payload is empty.")
-        header = lines[0]
-        seq_lines = lines[1:]
-        if not header.startswith(">"):
-            raise ValueError("Invalid FASTA header")
-        header = header[1:]
-        parts = header.split(None, 1)
-        seq_id = parts[0]
-        desc = parts[1] if len(parts) > 1 else ""
-        sequence = "".join(seq_lines).replace("U", "T").upper()
-        return seq_id, desc, sequence
+        return parse_single_fasta(text)
+
+
+def normalize_rna_sequence(sequence: str) -> str:
+    """Normalize DNA/RNA without silently removing unsupported bases."""
+
+    compact = "".join(base for base in sequence if not base.isspace())
+    if not compact:
+        raise ValueError("Sequence vide : fournir au moins une base A, C, G, T ou U.")
+    for position, base in enumerate(compact, start=1):
+        if base not in "ACGTUacgtu":
+            raise ValueError(
+                f"Caractere non pris en charge {base!r} a la position {position} "
+                "(numerotation depuis 1, sans espaces). Bases acceptees : A, C, G, T, U."
+            )
+    return compact.upper().replace("T", "U")
+
+
+def parse_single_fasta(text: str) -> tuple[str, str, str]:
+    """Read exactly one nonempty FASTA record and return normalized RNA."""
+
+    lines = [line.strip() for line in text.lstrip("\ufeff").splitlines() if line.strip()]
+    if not lines:
+        raise ValueError("Fichier FASTA vide.")
+    if not lines[0].startswith(">"):
+        raise ValueError("En-tete FASTA manquant : la premiere ligne doit commencer par >.")
+    header = lines[0][1:].strip()
+    if not header:
+        raise ValueError("En-tete FASTA vide : un identifiant est requis apres >.")
+    if any(line.startswith(">") for line in lines[1:]):
+        raise ValueError("Plusieurs sequences FASTA detectees : fournir une seule sequence par fichier.")
+    parts = header.split(None, 1)
+    identifier = parts[0]
+    description = parts[1] if len(parts) > 1 else ""
+    return identifier, description, normalize_rna_sequence("".join(lines[1:]))
+
+
+def load_fasta_record(path: str | Path, label: Optional[str] = None) -> SequenceRecord:
+    """Load one UTF-8 FASTA file while preserving its identifier and provenance."""
+
+    file_path = Path(path)
+    text = file_path.read_text(encoding="utf-8-sig")
+    try:
+        identifier, description, sequence = parse_single_fasta(text)
+    except ValueError as exc:
+        raise ValueError(f"{file_path}: {exc}") from exc
+    return SequenceRecord(
+        identifier=label if label is not None else identifier,
+        description=description,
+        sequence=sequence,
+        metadata={"source": "fasta", "path": str(file_path), "fasta_identifier": identifier},
+    )
 
 
 def normalize_user_sequence(sequence: str, label: str) -> SequenceRecord:
     """Create a SequenceRecord from an arbitrary RNA sequence supplied by the user."""
 
-    cleaned = "".join(base for base in sequence.upper() if base in {"A", "C", "G", "T", "U"})
-    if not cleaned:
-        raise ValueError("Aucune base valide trouvee dans la sequence fournie.")
-    cleaned = cleaned.replace("T", "U")
     return SequenceRecord(
         identifier=label,
         description=f"User provided sequence ({label})",
-        sequence=cleaned,
+        sequence=normalize_rna_sequence(sequence),
         metadata={"source": "user"},
     )

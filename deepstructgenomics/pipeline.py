@@ -13,9 +13,10 @@ from deepstructgenomics.config import PipelineConfig
 from deepstructgenomics.data_sources.ncbi_client import (
     NCBIClient,
     SequenceRecord,
+    load_fasta_record,
     normalize_user_sequence,
 )
-from deepstructgenomics.reporting.report_generator import ReportPaths, export_report
+from deepstructgenomics.reporting.report_generator import ReportPaths, export_report, safe_output_stem
 from deepstructgenomics.rna.secondary_structure import (
     SecondaryStructureResult,
     predict_secondary_structure,
@@ -42,12 +43,25 @@ class PipelineInput:
 
     accession: Optional[str] = None
     sequence: Optional[str] = None
-    sequence_label: str = "custom_sequence"
+    sequence_label: Optional[str] = None
     mutant_sequence: Optional[str] = None
+    fasta_path: Optional[str | Path] = None
+    mutant_fasta_path: Optional[str | Path] = None
 
     def __post_init__(self) -> None:
-        if not self.accession and not self.sequence:
-            raise ValueError("Un identifiant NCBI ou une sequence doivent etre fournis.")
+        sources = (self.accession, self.sequence, self.fasta_path)
+        if sum(value is not None for value in sources) != 1:
+            raise ValueError("Fournir exactement une source : accession NCBI, sequence ou fichier FASTA.")
+        if self.accession is not None:
+            self.accession = self.accession.strip()
+            if not self.accession:
+                raise ValueError("L'identifiant NCBI ne peut pas etre vide.")
+        if self.mutant_sequence is not None and self.mutant_fasta_path is not None:
+            raise ValueError("Fournir soit une sequence mutante, soit un fichier FASTA mutant, pas les deux.")
+        if self.sequence_label is not None:
+            self.sequence_label = self.sequence_label.strip()
+            if not self.sequence_label:
+                raise ValueError("Le label ne peut pas etre vide.")
 
 
 @dataclass
@@ -96,22 +110,28 @@ class DeepStructPipeline:
         """Processes a sequence and returns the core artifacts."""
 
         sequence_record = self._resolve_sequence(request)
+        mutant_record: Optional[SequenceRecord] = None
+        if request.mutant_fasta_path is not None:
+            mutant_record = load_fasta_record(request.mutant_fasta_path)
+        elif request.mutant_sequence is not None:
+            mutant_record = normalize_user_sequence(request.mutant_sequence, f"{sequence_record.identifier}_mut")
+
+        # Resolve and validate both inputs before starting the folding algorithm.
         annotations = self._annotate_sequence(sequence_record)
         structure = predict_secondary_structure(sequence_record.sequence, self.config.rna)
 
         variant_result: Optional[VariantImpactResult] = None
         mutant_sequence: Optional[str] = None
         mutant_structure: Optional[SecondaryStructureResult] = None
-        if request.mutant_sequence:
-            mutant = normalize_user_sequence(request.mutant_sequence, f"{sequence_record.identifier}_mut")
-            mutant_structure = predict_secondary_structure(mutant.sequence, self.config.rna)
+        if mutant_record is not None:
+            mutant_structure = predict_secondary_structure(mutant_record.sequence, self.config.rna)
             variant_result = compare_sequences(
                 sequence_record.sequence,
-                mutant.sequence,
+                mutant_record.sequence,
                 structure.base_pairs,
                 mutant_structure.base_pairs,
             )
-            mutant_sequence = mutant.sequence
+            mutant_sequence = mutant_record.sequence
 
         result = PipelineResult(
             sequence_record=sequence_record,
@@ -138,10 +158,12 @@ class DeepStructPipeline:
         return result
 
     def _resolve_sequence(self, request: PipelineInput) -> SequenceRecord:
-        if request.accession:
+        if request.accession is not None:
             return self.ncbi_client.fetch_sequence(request.accession)
+        if request.fasta_path is not None:
+            return load_fasta_record(request.fasta_path, label=request.sequence_label)
         assert request.sequence is not None
-        return normalize_user_sequence(request.sequence, request.sequence_label)
+        return normalize_user_sequence(request.sequence, request.sequence_label or "custom_sequence")
 
     @staticmethod
     def _summarize_impact(result: PipelineResult) -> Dict[str, Any]:
@@ -195,7 +217,7 @@ class DeepStructPipeline:
     ) -> VisualizationArtifactPaths:
         """Generate pseudo-3D structures + score payload for the viewer."""
 
-        run_id = result.sequence_record.identifier.replace("|", "_")
+        run_id = safe_output_stem(result.sequence_record.identifier)
         viz_dir = output_dir / run_id / "visualization"
         viz_dir.mkdir(parents=True, exist_ok=True)
 
