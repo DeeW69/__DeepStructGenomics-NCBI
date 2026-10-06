@@ -355,6 +355,8 @@ retours, sans calendrier de livraison annoncé.
 ## Suivi et contributions
 
 Les changements sont consignés dans le [changelog](CHANGELOG.md).
+Les règles de numérotation et de publication sont décrites dans
+[VERSIONING.md](VERSIONING.md).
 Les [issues GitHub](https://github.com/DeeW69/__DeepStructGenomics-NCBI/issues)
 servent à signaler un problème ou proposer une évolution de la roadmap.
 Pour un bug, joindre la commande, la version de Python et un exemple minimal

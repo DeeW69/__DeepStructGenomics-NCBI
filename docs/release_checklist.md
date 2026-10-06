@@ -34,6 +34,8 @@ Guide concis pour préparer, taguer et publier une version de DeepStructGenomics
 
 ## 2. Versioning
 
+La [politique de versionnement](../VERSIONING.md) définit les règles de référence.
+
 - Convention : `vMAJOR.MINOR.PATCH` (ex. `v0.1.0`, `v0.2.0`, `v1.0.0`).
 - `v0.2.x` désigne une série de versions ; chaque release et chaque tag utilisent
   un numéro précis, par exemple `v0.2.1`.
@@ -74,7 +76,8 @@ Vérifier que les deux jobs Linux/Windows réussissent pour le commit à publier
 
 ## 5. Pre-release checklist (alpha/beta)
 
-- Mention explicite dans le tag (`v0.x.y-alpha` ou `v1.0.0-beta.1`).
+- Version Python de prépublication (`0.3.0a1`, `0.3.0b1` ou `0.3.0rc1`)
+  et tag correspondant préfixé par `v` (par exemple `v0.3.0rc1`).
 - Notifier que les artefacts peuvent changer et que l’API/CLI n’est pas figée.
 - Documenter les éléments à valider avant GA :
   - Couverture tests minimale.

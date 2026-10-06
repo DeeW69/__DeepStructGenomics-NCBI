@@ -1,5 +1,11 @@
 # Historique des versions
 
+## Non publié
+
+- Ajout de `VERSIONING.md` : règles de numérotation, synchronisation des fichiers,
+  préversions et publication des releases. Ce guide est lié depuis le README
+  et inclus dans les futures archives source.
+
 ## 0.2.1 — 6 octobre 2026
 
 [Release GitHub et artefacts](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.1)
