@@ -1,7 +1,20 @@
 # Historique des versions
 
-## Non publié
+## 0.3.0 — 6 octobre 2026
 
+[Release GitHub et artefacts](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.3.0)
+
+- Ouverture simplifiée d'un résultat 3D avec l'option `--manifest` dans `scripts/view_3d.py` :
+  détection automatique du viewer (`overlay-delta`, `overlay`, `molecule`) et résolution
+  automatique des chemins de structures et de scores relatifs au dossier du manifeste.
+- Export tabulaire des positions les plus modifiées (hotspots) au format CSV
+  (`<run_id>_hotspots.csv` dans le dossier des rapports et `hotspots.csv` dans
+  les artefacts de visualisation) avec colonnes `position`, `reference`, `mutant`,
+  `delta` et `abs_delta` pour l'analyse dans des tableurs ou notebooks.
+- Nouvelles options CLI dans `scripts/run_pipeline.py` :
+  `--top-k` pour contrôler le nombre maximal de hotspots affichés,
+  `--min-abs-delta` (alias `--delta-threshold`) pour fixer le seuil minimal de variation,
+  et `--base-pair-threshold` pour ajuster la sensibilité du comptage des paires affectées.
 - Ajout de `VERSIONING.md` : règles de numérotation, synchronisation des fichiers,
   préversions et publication des releases. Ce guide est lié depuis le README
   et inclus dans les futures archives source.

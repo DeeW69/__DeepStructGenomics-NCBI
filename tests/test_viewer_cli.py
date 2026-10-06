@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 import sys
 from types import ModuleType
@@ -83,3 +84,97 @@ def test_explicit_delta_metric_still_requires_delta_mode(viewer_cli, monkeypatch
 
     for constructor in constructors.values():
         constructor.assert_not_called()
+
+
+def test_viewer_cli_requires_mode_or_manifest(viewer_cli, monkeypatch):
+    cli, constructors = viewer_cli
+    monkeypatch.setattr(sys, "argv", ["view_3d.py"])
+
+    with pytest.raises(SystemExit, match="Fournir au moins --mode ou --manifest"):
+        cli.main()
+
+
+def test_viewer_cli_manifest_auto_detects_overlay_delta(viewer_cli, tmp_path, monkeypatch):
+    cli, constructors = viewer_cli
+    wt_pdb = tmp_path / "wt.pdb"
+    mut_pdb = tmp_path / "mut.pdb"
+    wt_scores = tmp_path / "wt_scores.json"
+    mut_scores = tmp_path / "mut_scores.json"
+    for p in (wt_pdb, mut_pdb, wt_scores, mut_scores):
+        p.write_text("{}", encoding="utf-8")
+
+    manifest = tmp_path / "visualization_manifest.json"
+    manifest.write_text(
+        json.dumps({
+            "wt_structure": "wt.pdb",
+            "mutant_structure": "mut.pdb",
+            "wt_score_file": "wt_scores.json",
+            "mutant_score_file": "mut_scores.json",
+        }),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(sys, "argv", ["view_3d.py", "--manifest", str(manifest)])
+    cli.main()
+
+    constructor = constructors["OverlayDeltaViewer"]
+    constructor.assert_called_once()
+    assert constructor.call_args.args[0] == str(wt_pdb)
+    assert constructor.call_args.args[1] == str(mut_pdb)
+    assert constructor.call_args.args[2] == str(wt_scores)
+    assert constructor.call_args.args[3] == str(mut_scores)
+
+
+def test_viewer_cli_manifest_explicit_mode_overlay(viewer_cli, tmp_path, monkeypatch):
+    cli, constructors = viewer_cli
+    wt_pdb = tmp_path / "wt.pdb"
+    mut_pdb = tmp_path / "mut.pdb"
+    mut_scores = tmp_path / "mut_scores.json"
+    for p in (wt_pdb, mut_pdb, mut_scores):
+        p.write_text("{}", encoding="utf-8")
+
+    manifest = tmp_path / "visualization_manifest.json"
+    manifest.write_text(
+        json.dumps({
+            "wt_structure": str(wt_pdb),
+            "mutant_structure": str(mut_pdb),
+            "mutant_score_file": str(mut_scores),
+        }),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(sys, "argv", ["view_3d.py", "--manifest", str(manifest), "--mode", "overlay"])
+    cli.main()
+
+    constructor = constructors["OverlayViewer"]
+    constructor.assert_called_once()
+    assert constructor.call_args.args[0] == str(wt_pdb)
+    assert constructor.call_args.args[1] == str(mut_pdb)
+    assert constructor.call_args.args[2] == str(mut_scores)
+
+
+def test_viewer_cli_manifest_auto_detects_molecule(viewer_cli, tmp_path, monkeypatch):
+    cli, constructors = viewer_cli
+    wt_pdb = tmp_path / "wt.pdb"
+    wt_pdb.write_text("{}", encoding="utf-8")
+
+    manifest = tmp_path / "visualization_manifest.json"
+    manifest.write_text(
+        json.dumps({"wt_structure": "wt.pdb"}),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(sys, "argv", ["view_3d.py", "--manifest", str(manifest)])
+    cli.main()
+
+    constructor = constructors["MoleculeViewer"]
+    constructor.assert_called_once_with(str(wt_pdb), show_backbone=False)
+
+
+def test_viewer_cli_manifest_invalid_or_missing(viewer_cli, tmp_path, monkeypatch):
+    cli, constructors = viewer_cli
+    missing_manifest = tmp_path / "nonexistent.json"
+    monkeypatch.setattr(sys, "argv", ["view_3d.py", "--manifest", str(missing_manifest)])
+
+    with pytest.raises(SystemExit, match="Erreur de lecture du manifeste"):
+        cli.main()

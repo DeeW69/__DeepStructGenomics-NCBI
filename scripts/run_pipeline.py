@@ -31,6 +31,21 @@ def parse_args() -> argparse.Namespace:
     mutant.add_argument("--mutant-sequence", help="Sequence mutante pour comparaison.")
     mutant.add_argument("--mutant-fasta", type=Path, help="Fichier FASTA local contenant une seule sequence mutante.")
     parser.add_argument("--output-dir", default="outputs", help="Dossier de sortie des rapports.")
+    parser.add_argument("--top-k", type=int, default=10, help="Nombre maximal de positions les plus modifiees a inclure dans les rapports (defaut : 10).")
+    parser.add_argument(
+        "--min-abs-delta",
+        "--delta-threshold",
+        dest="min_abs_delta",
+        type=float,
+        default=0.1,
+        help="Seuil minimal |delta| pour retenir une position modifiee (defaut : 0.1).",
+    )
+    parser.add_argument(
+        "--base-pair-threshold",
+        type=float,
+        default=0.2,
+        help="Seuil |delta| pour comptabiliser une paire de bases affectee (defaut : 0.2).",
+    )
     parser.add_argument("--ncbi-email", help="Email requis par les E-utilities.")
     parser.add_argument("--ncbi-api-key", help="Cle API optionnelle pour augmenter les quotas.")
     return parser.parse_args()
@@ -46,6 +61,9 @@ def main() -> None:
             mutant_sequence=args.mutant_sequence,
             fasta_path=args.fasta,
             mutant_fasta_path=args.mutant_fasta,
+            top_k=args.top_k,
+            min_abs_delta=args.min_abs_delta,
+            base_pair_threshold=args.base_pair_threshold,
         )
         ncbi_config = NCBIConfig(email=args.ncbi_email, api_key=args.ncbi_api_key)
         pipeline = DeepStructPipeline(PipelineConfig(ncbi=ncbi_config))
@@ -58,6 +76,8 @@ def main() -> None:
     print("Rapports generes :")
     print(f"- JSON     : {result.report_paths.json_path}")
     print(f"- Markdown : {result.report_paths.markdown_path}")
+    if result.report_paths.csv_path:
+        print(f"- CSV      : {result.report_paths.csv_path}")
     if result.visualization_paths and result.visualization_paths.impact_summary_file:
         print(f"- Impact   : {result.visualization_paths.impact_summary_file}")
 

@@ -13,6 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from deepstructgenomics.visualization.export_helpers import parse_export_view
+from deepstructgenomics.visualization.io_structures import resolve_manifest_bundle
 from deepstructgenomics.visualization.overlay_helpers import load_base_pairs_json
 from deepstructgenomics.visualization.tk_vtk_minimal import MinimalVTKViewer
 from deepstructgenomics.visualization.tk_vtk_molecule import MoleculeViewer
@@ -24,8 +25,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--mode",
         choices=["minimal", "molecule", "overlay", "overlay-delta"],
-        required=True,
-        help="Type de viewer a afficher.",
+        help="Type de viewer a afficher (auto-detecte si --manifest est fourni).",
+    )
+    parser.add_argument(
+        "--manifest",
+        help="Chemin vers visualization_manifest.json pour resoudre automatiquement structures et scores.",
     )
     parser.add_argument("--structure", help="Chemin vers une structure (PDB/mmCIF) pour le mode molecule.")
     parser.add_argument("--wt", help="Structure de reference pour le mode overlay.")
@@ -138,6 +142,50 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    if not args.mode and not args.manifest:
+        raise SystemExit("Fournir au moins --mode ou --manifest.")
+
+    if args.manifest:
+        try:
+            bundle = resolve_manifest_bundle(args.manifest)
+        except (ValueError, OSError) as exc:
+            raise SystemExit(f"Erreur de lecture du manifeste : {exc}") from None
+
+        manifest_dir = bundle["manifest_path"].parent
+        if not args.wt and bundle.get("wt_structure"):
+            args.wt = str(bundle["wt_structure"])
+        if not args.mut and bundle.get("mutant_structure"):
+            args.mut = str(bundle["mutant_structure"])
+        if not args.wt_scores and bundle.get("wt_score_file"):
+            args.wt_scores = str(bundle["wt_score_file"])
+        if not args.mut_scores and bundle.get("mutant_score_file"):
+            args.mut_scores = str(bundle["mutant_score_file"])
+        if not args.scores and bundle.get("mutant_score_file"):
+            args.scores = str(bundle["mutant_score_file"])
+        if not args.structure and bundle.get("wt_structure"):
+            args.structure = str(bundle["wt_structure"])
+
+        if not args.base_pairs_wt and not args.no_base_pairs:
+            candidate_wt = manifest_dir / "wt_base_pairs.json"
+            if candidate_wt.is_file():
+                args.base_pairs_wt = str(candidate_wt)
+        if not args.base_pairs_mut and not args.no_base_pairs:
+            candidate_mut = manifest_dir / "mut_base_pairs.json"
+            if candidate_mut.is_file():
+                args.base_pairs_mut = str(candidate_mut)
+
+        if not args.mode:
+            if args.wt and args.mut and args.wt_scores and args.mut_scores:
+                args.mode = "overlay-delta"
+            elif args.wt and args.mut and (args.scores or args.mut_scores):
+                args.mode = "overlay"
+            elif args.structure or args.wt:
+                args.mode = "molecule"
+                if not args.structure and args.wt:
+                    args.structure = args.wt
+            else:
+                raise SystemExit("Impossible de deduire le mode depuis le manifeste : structures manquantes.")
+
     if args.export_only and not args.export:
         raise SystemExit("--export-only requiert --export.")
     if args.export_scale < 1:

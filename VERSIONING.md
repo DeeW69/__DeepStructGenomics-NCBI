@@ -110,5 +110,6 @@ ne pas réutiliser le numéro retiré ni déplacer un tag déjà publié.
 | --- | --- | --- |
 | [v0.2.0](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.0) | 6 octobre 2026 | Entrées FASTA, rapports enrichis, démo et améliorations du viewer. |
 | [v0.2.1](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.1) | 6 octobre 2026 | Dépendances verrouillées, robustesse NCBI, 132 tests et guide des coordonnées. |
+| [v0.3.0](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.3.0) | 6 octobre 2026 | Ouverture par manifeste, exports CSV et seuils configurables. |
 
 Mainteneur : [DeeW69](https://github.com/DeeW69).

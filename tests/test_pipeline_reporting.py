@@ -135,6 +135,23 @@ def test_reports_share_summary_and_preserve_existing_artifacts(pipeline):
     assert "| 1 | -0.700 |" in markdown
     assert "| 6 | -0.600 |" in markdown
 
+    assert result.report_paths.csv_path is not None
+    assert result.report_paths.csv_path.is_file()
+    csv_text = result.report_paths.csv_path.read_text(encoding="utf-8")
+    assert csv_text.splitlines()[0] == "position,reference,mutant,delta,abs_delta"
+    assert "1,G,A,-0.7,0.7" in csv_text
+    assert "6,C,C,-0.6,0.6" in csv_text
+    assert artifacts.hotspots_csv_file is not None
+    assert artifacts.hotspots_csv_file.is_file()
+    assert Path(manifest["hotspots_csv_file"]) == artifacts.hotspots_csv_file
+
+
+def test_export_hotspots_csv_empty(tmp_path):
+    from deepstructgenomics.reporting.report_generator import export_hotspots_csv
+    out_csv = tmp_path / "empty_hotspots.csv"
+    export_hotspots_csv([], out_csv)
+    assert out_csv.read_text(encoding="utf-8").strip() == "position,reference,mutant,delta,abs_delta"
+
 
 @pytest.mark.parametrize("mutant_sequence", [None, REFERENCE], ids=["no-mutant", "identical-mutant"])
 def test_missing_mutant_is_distinct_from_zero_impact(pipeline, mutant_sequence):

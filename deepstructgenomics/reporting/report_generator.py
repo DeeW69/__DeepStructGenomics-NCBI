@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import csv
 import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence
 
 if TYPE_CHECKING:  # pragma: no cover - only used for typing
     from deepstructgenomics.pipeline import PipelineResult
@@ -18,6 +19,7 @@ class ReportPaths:
 
     json_path: Path
     markdown_path: Path
+    csv_path: Optional[Path] = None
 
 
 def safe_output_stem(identifier: str) -> str:
@@ -31,17 +33,63 @@ def safe_output_stem(identifier: str) -> str:
     return stem
 
 
+def export_hotspots_csv(
+    hotspots: Sequence[Dict[str, Any]],
+    output_path: str | Path,
+    *,
+    reference_sequence: Optional[str] = None,
+    mutant_sequence: Optional[str] = None,
+) -> Path:
+    """Export most modified positions (hotspots) to a CSV spreadsheet."""
+
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = ["position", "reference", "mutant", "delta", "abs_delta"]
+    with path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for entry in hotspots:
+            pos = int(entry["position"])
+            ref_base = ""
+            mut_base = ""
+            if reference_sequence and 1 <= pos <= len(reference_sequence):
+                ref_base = reference_sequence[pos - 1]
+            if mutant_sequence and 1 <= pos <= len(mutant_sequence):
+                mut_base = mutant_sequence[pos - 1]
+            delta = float(entry["delta"])
+            abs_delta = float(entry.get("abs_delta", abs(delta)))
+            writer.writerow({
+                "position": pos,
+                "reference": ref_base,
+                "mutant": mut_base,
+                "delta": round(delta, 4),
+                "abs_delta": round(abs_delta, 4),
+            })
+    return path
+
+
 def export_report(result: "PipelineResult", output_dir: Path) -> ReportPaths:
-    """Write JSON and Markdown representations to disk."""
+    """Write JSON, Markdown and CSV representations to disk."""
 
     payload = _build_payload(result)
     base_name = safe_output_stem(result.sequence_record.identifier)
     json_path = output_dir / f"{base_name}.json"
     markdown_path = output_dir / f"{base_name}.md"
+    csv_path = output_dir / f"{base_name}_hotspots.csv"
 
     json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     markdown_path.write_text(_render_markdown(payload), encoding="utf-8")
-    return ReportPaths(json_path=json_path, markdown_path=markdown_path)
+
+    hotspots = []
+    if result.impact_summary and "hotspots" in result.impact_summary:
+        hotspots = result.impact_summary["hotspots"]
+    export_hotspots_csv(
+        hotspots,
+        csv_path,
+        reference_sequence=result.structure.sequence,
+        mutant_sequence=result.mutant_sequence,
+    )
+    return ReportPaths(json_path=json_path, markdown_path=markdown_path, csv_path=csv_path)
 
 
 def _build_payload(result: "PipelineResult") -> Dict[str, Any]:

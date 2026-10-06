@@ -2,17 +2,17 @@
 
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](pyproject.toml)
-[![Release v0.2.1](https://img.shields.io/badge/release-v0.2.1-blue.svg)](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.1)
+[![Release v0.3.0](https://img.shields.io/badge/release-v0.3.0-blue.svg)](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.3.0)
 [![Tests](https://github.com/DeeW69/__DeepStructGenomics-NCBI/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/DeeW69/__DeepStructGenomics-NCBI/actions/workflows/tests.yml)
 
 DeepStructGenomics-NCBI est un cadre de recherche et d'ingénierie logicielle dédié à l'étude structurale de l'ARN et de la régulation génomique à partir des données publiques du NCBI. L'objectif est de relier systématiquement séquences biologiques, structures (ARN et architecture 3D) et impact fonctionnel potentiel, afin de proposer des analyses mécanistiques exploitables en recherche biomédicale.
 
 **Projet en développement actif — README mis à jour le 6 octobre 2026.**
-La dernière version publiée est **v0.2.1**. Les notes et les exemples téléchargeables
-sont regroupés dans la [release v0.2.1](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.1).
-Cette version regroupe les étapes de stabilisation **v0.2.x** : dépendances
-verrouillées, couverture des erreurs NCBI et guide de numérotation des positions.
-La validation locale du 6 octobre 2026 compte **132 tests réussis** sous
+La dernière version publiée est **v0.3.0**. Les notes et les exemples téléchargeables
+sont regroupés dans la [release v0.3.0](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.3.0).
+Cette version ajoute l'ouverture par manifeste, les exports CSV et le réglage
+des seuils de comparaison.
+La validation locale du 6 octobre 2026 compte **147 tests réussis** sous
 Windows / Python 3.11.
 Le [workflow de tests](.github/workflows/tests.yml) est configuré pour
 Linux / Python 3.10 et Windows / Python 3.12 ; le badge ci-dessus suit les
@@ -23,6 +23,15 @@ exécutions sur GitHub.
 [Roadmap](#roadmap) · [Contribuer](#suivi-et-contributions)
 
 ## Features par version
+
+### v0.3.0 — publiée le 6 octobre 2026
+
+- Ouverture simplifiée dans le visualiseur avec `python scripts/view_3d.py --manifest <chemin/vers/visualization_manifest.json>` : détection automatique du mode (`overlay-delta`, `overlay`, `molecule`) et résolution des chemins relatifs ou déplacés.
+- Export des positions les plus modifiées en CSV (`<run_id>_hotspots.csv` et `visualization/hotspots.csv`) avec colonnes `position`, `reference`, `mutant`, `delta` et `abs_delta` pour tableurs et notebooks.
+- Options CLI `--top-k`, `--min-abs-delta` (alias `--delta-threshold`) et `--base-pair-threshold` dans `scripts/run_pipeline.py` pour personnaliser les seuils et le nombre de hotspots.
+
+Les [notes de release](docs/releases/v0.3.0.md) décrivent ces nouveautés.
+Les formats JSON historiques et les options existantes restent disponibles.
 
 ### v0.2.1 — publiée le 6 octobre 2026
 
@@ -200,7 +209,7 @@ Les structures 3D générées sont des projections contraintes (une sphère par 
 
 ## Installation rapide
 
-Depuis le tag `v0.2.1` ou la branche `main`, avec Python 3.10 ou ultérieur. Le verrou est validé
+Depuis le tag `v0.3.0` ou la branche `main`, avec Python 3.10 ou ultérieur. Le verrou est validé
 sous Linux / Python 3.10 et Windows / Python 3.12. Sous macOS / Linux :
 
 ```bash
@@ -339,18 +348,20 @@ retours, sans calendrier de livraison annoncé.
 - [x] Documenter la correspondance des indices entre séquences, rapports et fichiers de visualisation.
 - [x] Publier la release v0.2.1 avec le verrou des dépendances et les guides.
 
-### v0.3.0 — ergonomie prévue
+### v0.3.0 — ergonomie publiée
 
-- [ ] Ouvrir un résultat 3D avec `--manifest`, en résolvant automatiquement les chemins des structures et scores.
-- [ ] Exporter les positions les plus modifiées en CSV pour les tableurs et notebooks.
-- [ ] Exposer les seuils et le nombre de positions à afficher dans la CLI.
+- [x] Ouvrir un résultat 3D avec `--manifest`, en résolvant automatiquement les chemins des structures et scores.
+- [x] Exporter les positions les plus modifiées en CSV pour les tableurs et notebooks.
+- [x] Exposer les seuils et le nombre de positions à afficher dans la CLI.
 
-### Pistes à évaluer ensuite
+### v0.4.x — exploration et traitement par lots prévus
 
-- Cache local des séquences NCBI avec provenance et option de rafraîchissement.
-- Traitement de plusieurs séquences FASTA par lot, avec un rapport par entrée.
-- Évaluation des prédictions ARN sur des jeux de référence et comparaison à d'autres méthodes.
-- Intégration exploratoire de données de contacts Hi-C pour la génomique 3D.
+Ces pistes restent à évaluer et à implémenter ; elles ne font pas partie de v0.3.0.
+
+- [ ] Cache local des séquences NCBI avec provenance et option de rafraîchissement.
+- [ ] Traitement de plusieurs séquences FASTA par lot, avec un rapport par entrée.
+- [ ] Évaluation des prédictions ARN sur des jeux de référence et comparaison à d'autres méthodes.
+- [ ] Intégration exploratoire de données de contacts Hi-C pour la génomique 3D.
 
 ## Suivi et contributions
 

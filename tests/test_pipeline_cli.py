@@ -231,3 +231,78 @@ def test_cli_input_errors_are_readable_and_leave_no_reports(cli, tmp_path, monke
     if input_kind.startswith("ambiguous"):
         assert "N" in stderr and "4" in stderr
     assert not list(output_dir.rglob("*"))
+
+
+def test_cli_exports_csv_and_applies_thresholds(cli, tmp_path, monkeypatch, capsys):
+    output_dir = tmp_path / "reports"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(SCRIPT),
+            "--sequence", "GAAAAC",
+            "--mutant-sequence", "AAAAAC",
+            "--output-dir", str(output_dir),
+            "--top-k", "1",
+            "--min-abs-delta", "0.65",
+            "--base-pair-threshold", "0.65",
+        ],
+    )
+
+    cli.main()
+
+    stdout = capsys.readouterr().out
+    assert "- CSV      :" in stdout
+    csv_file = output_dir / "custom_sequence_hotspots.csv"
+    assert csv_file.is_file()
+    lines = csv_file.read_text(encoding="utf-8").strip().splitlines()
+    assert lines[0] == "position,reference,mutant,delta,abs_delta"
+    # Only position 1 should be present because top-k=1 and min_abs_delta=0.65
+    assert len(lines) == 2
+    assert lines[1] == "1,G,A,-0.7,0.7"
+
+    json_report = json.loads((output_dir / "custom_sequence.json").read_text(encoding="utf-8"))
+    assert json_report["impact_summary"]["parameters"]["top_k"] == 1
+    assert json_report["impact_summary"]["parameters"]["min_abs_delta"] == 0.65
+    assert len(json_report["impact_summary"]["hotspots"]) == 1
+
+
+def test_cli_accepts_delta_threshold_alias(cli, tmp_path, monkeypatch):
+    output_dir = tmp_path / "reports"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(SCRIPT),
+            "--sequence", "GAAAAC",
+            "--mutant-sequence", "AAAAAC",
+            "--output-dir", str(output_dir),
+            "--delta-threshold", "0.65",
+        ],
+    )
+
+    cli.main()
+
+    json_report = json.loads((output_dir / "custom_sequence.json").read_text(encoding="utf-8"))
+    assert json_report["impact_summary"]["parameters"]["min_abs_delta"] == 0.65
+
+
+@pytest.mark.parametrize("invalid_arg", [["--top-k", "-1"], ["--min-abs-delta", "-0.1"], ["--base-pair-threshold", "-0.2"]])
+def test_cli_rejects_negative_thresholds(cli, tmp_path, monkeypatch, capsys, invalid_arg):
+    output_dir = tmp_path / "reports"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(SCRIPT),
+            "--sequence", "GAAAAC",
+            "--output-dir", str(output_dir),
+            *invalid_arg,
+        ],
+    )
+
+    with pytest.raises(SystemExit) as error:
+        cli.main()
+
+    assert error.value.code == 2
+    assert "Erreur :" in capsys.readouterr().err

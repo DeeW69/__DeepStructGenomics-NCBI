@@ -183,6 +183,7 @@ def write_visualization_manifest(
     wt_score_file: Optional[Path],
     mutant_score_file: Optional[Path],
     impact_summary_file: Optional[Path] = None,
+    hotspots_csv_file: Optional[Path] = None,
 ) -> Path:
     """Write the manifest describing visualization artifacts."""
 
@@ -194,12 +195,70 @@ def write_visualization_manifest(
         "wt_score_file": str(wt_score_file) if wt_score_file else None,
         "mutant_score_file": str(mutant_score_file) if mutant_score_file else None,
         "impact_summary_file": str(impact_summary_file) if impact_summary_file else None,
+        "hotspots_csv_file": str(hotspots_csv_file) if hotspots_csv_file else None,
         "parameters": parameters,
     }
     manifest_path = Path(path)
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
     return manifest_path
+
+
+def load_visualization_manifest(path: str | Path) -> Dict[str, Any]:
+    """Load and validate a visualization manifest JSON file."""
+
+    manifest_path = Path(path)
+    if not manifest_path.is_file():
+        raise FileNotFoundError(f"Manifeste introuvable : {manifest_path}")
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Fichier manifeste JSON invalide ({manifest_path.name}) : {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("Le manifeste doit être un dictionnaire JSON.")
+    return payload
+
+
+def resolve_manifest_bundle(manifest_path: str | Path) -> Dict[str, Any]:
+    """Load a visualization manifest and resolve its referenced artifact paths.
+
+    Relative paths prefer the manifest directory. Legacy paths relative to the
+    working directory and relocated bundles are also supported.
+    """
+
+    manifest_file = Path(manifest_path).resolve()
+    payload = load_visualization_manifest(manifest_file)
+    manifest_dir = manifest_file.parent
+
+    def _resolve(field_name: str) -> Optional[Path]:
+        raw_val = payload.get(field_name)
+        if not raw_val or not isinstance(raw_val, str):
+            return None
+        candidate = Path(raw_val.replace("\\", "/"))
+        by_rel = manifest_dir / candidate
+        if by_rel.is_file():
+            return by_rel.resolve()
+        if candidate.is_file():
+            return candidate.resolve()
+        # Look in manifest_dir by basename or relative path
+        by_name = manifest_dir / candidate.name
+        if by_name.is_file():
+            return by_name.resolve()
+        # Fallback to candidate path in manifest_dir
+        return by_name.resolve()
+
+    return {
+        "manifest_path": manifest_file,
+        "identifier": payload.get("identifier"),
+        "source": payload.get("source"),
+        "wt_structure": _resolve("wt_structure"),
+        "mutant_structure": _resolve("mutant_structure"),
+        "wt_score_file": _resolve("wt_score_file"),
+        "mutant_score_file": _resolve("mutant_score_file"),
+        "impact_summary_file": _resolve("impact_summary_file"),
+        "hotspots_csv_file": _resolve("hotspots_csv_file"),
+        "parameters": payload.get("parameters", {}),
+    }
 
 
 def build_residue_atom_index(structure: MolecularStructure) -> Dict[str, List[int]]:

@@ -58,9 +58,11 @@ le score de son partenaire d'appariement, même si sa base reste identique.
 outputs_demo/
   offline_demo.md
   offline_demo.json
+  offline_demo_hotspots.csv
   offline_demo/
     visualization/
       impact_summary.json
+      hotspots.csv
       wt_structure.pdb
       mutant_structure.pdb
       wt_scores.json

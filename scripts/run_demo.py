@@ -56,6 +56,8 @@ def main() -> None:
     print("Scores heuristiques, sans interpretation clinique.")
     print(f"Rapport Markdown : {result.report_paths.markdown_path}")
     print(f"Rapport JSON     : {result.report_paths.json_path}")
+    if result.report_paths.csv_path:
+        print(f"Export CSV       : {result.report_paths.csv_path}")
     print(f"Artefacts        : {result.visualization_paths.root_dir}")
 
 

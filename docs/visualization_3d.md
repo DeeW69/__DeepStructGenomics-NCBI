@@ -17,6 +17,9 @@ Ces dependances sont necessaires pour charger des structures PDB/mmCIF (BioPytho
 ## CLI `scripts/view_3d.py`
 
 ```bash
+# Chargement automatique depuis un manifeste (recommandé) :
+python scripts/view_3d.py --manifest outputs/<run_id>/visualization/visualization_manifest.json
+
 # Viewer minimal : camera + acteur de demonstration
 python scripts/view_3d.py --mode minimal
 
@@ -41,6 +44,7 @@ Chaque fenetre est une application VTK standalone (interactor natif). Les intera
 
 Options utiles :
 
+- `--manifest fichier.json` résout automatiquement les structures, scores et connecteurs, et détecte le mode (`overlay-delta`, `overlay` ou `molecule`).
 - `--no-backbone` desactive le backbone discret pour overlay / overlay-delta (active par defaut).
 - `--backbone` force le backbone en mode molecule.
 - `--export chemin.png` capture un screenshot des l'ouverture.

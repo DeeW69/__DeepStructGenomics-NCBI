@@ -16,7 +16,12 @@ from deepstructgenomics.data_sources.ncbi_client import (
     load_fasta_record,
     normalize_user_sequence,
 )
-from deepstructgenomics.reporting.report_generator import ReportPaths, export_report, safe_output_stem
+from deepstructgenomics.reporting.report_generator import (
+    ReportPaths,
+    export_hotspots_csv,
+    export_report,
+    safe_output_stem,
+)
 from deepstructgenomics.rna.secondary_structure import (
     SecondaryStructureResult,
     predict_secondary_structure,
@@ -47,6 +52,9 @@ class PipelineInput:
     mutant_sequence: Optional[str] = None
     fasta_path: Optional[str | Path] = None
     mutant_fasta_path: Optional[str | Path] = None
+    top_k: int = 10
+    min_abs_delta: float = 0.1
+    base_pair_threshold: float = 0.2
 
     def __post_init__(self) -> None:
         sources = (self.accession, self.sequence, self.fasta_path)
@@ -62,6 +70,12 @@ class PipelineInput:
             self.sequence_label = self.sequence_label.strip()
             if not self.sequence_label:
                 raise ValueError("Le label ne peut pas etre vide.")
+        if self.top_k < 0:
+            raise ValueError("top_k doit etre superieur ou egal a 0.")
+        if self.min_abs_delta < 0.0:
+            raise ValueError("min_abs_delta doit etre superieur ou egal a 0.")
+        if self.base_pair_threshold < 0.0:
+            raise ValueError("base_pair_threshold doit etre superieur ou egal a 0.")
 
 
 @dataclass
@@ -91,6 +105,7 @@ class VisualizationArtifactPaths:
     mutant_score_file: Optional[Path]
     manifest_path: Optional[Path]
     impact_summary_file: Optional[Path] = None
+    hotspots_csv_file: Optional[Path] = None
 
     @property
     def score_file(self) -> Optional[Path]:  # backward-compatible alias
@@ -142,7 +157,12 @@ class DeepStructPipeline:
             mutant_structure=mutant_structure,
             generated_at=datetime.now(timezone.utc),
         )
-        result.impact_summary = self._summarize_impact(result)
+        result.impact_summary = self._summarize_impact(
+            result,
+            top_k=request.top_k,
+            min_abs_delta=request.min_abs_delta,
+            base_pair_threshold=request.base_pair_threshold,
+        )
         return result
 
     def run_and_export(self, request: PipelineInput, output_dir: Optional[Path] = None) -> PipelineResult:
@@ -166,7 +186,13 @@ class DeepStructPipeline:
         return normalize_user_sequence(request.sequence, request.sequence_label or "custom_sequence")
 
     @staticmethod
-    def _summarize_impact(result: PipelineResult) -> Dict[str, Any]:
+    def _summarize_impact(
+        result: PipelineResult,
+        *,
+        top_k: int = 10,
+        min_abs_delta: float = 0.1,
+        base_pair_threshold: float = 0.2,
+    ) -> Dict[str, Any]:
         """Compute one summary shared by the reports and visualization bundle."""
 
         delta_scores: Dict[int, float] = {}
@@ -187,11 +213,11 @@ class DeepStructPipeline:
             result.sequence_record.identifier,
             result.generated_at,
             delta_scores,
-            top_k=10,
-            min_abs_delta=0.1,
+            top_k=top_k,
+            min_abs_delta=min_abs_delta,
             note=note,
             base_pairs=base_pair_sets,
-            base_pair_threshold=0.2,
+            base_pair_threshold=base_pair_threshold,
         )
 
     @staticmethod
@@ -277,6 +303,17 @@ class DeepStructPipeline:
             encoding="utf-8",
         )
 
+        hotspots_csv_path = viz_dir / "hotspots.csv"
+        hotspots = []
+        if result.impact_summary and "hotspots" in result.impact_summary:
+            hotspots = result.impact_summary["hotspots"]
+        export_hotspots_csv(
+            hotspots,
+            hotspots_csv_path,
+            reference_sequence=result.structure.sequence,
+            mutant_sequence=result.mutant_sequence,
+        )
+
         manifest_path = write_visualization_manifest(
             viz_dir / "visualization_manifest.json",
             identifier=result.sequence_record.identifier,
@@ -296,6 +333,7 @@ class DeepStructPipeline:
             wt_score_file=wt_score_path,
             mutant_score_file=mutant_score_path,
             impact_summary_file=impact_summary_path,
+            hotspots_csv_file=hotspots_csv_path,
         )
 
         return VisualizationArtifactPaths(
@@ -306,4 +344,5 @@ class DeepStructPipeline:
             mutant_score_file=mutant_score_path,
             manifest_path=manifest_path,
             impact_summary_file=impact_summary_path,
+            hotspots_csv_file=hotspots_csv_path,
         )

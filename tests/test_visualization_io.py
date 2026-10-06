@@ -3,14 +3,42 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 
 import numpy as np
+import pytest
 
 from deepstructgenomics.visualization.io_structures import (
     export_sequence_as_pseudo_pdb,
     generate_coarse_backbone,
     load_structure,
+    resolve_manifest_bundle,
 )
+
+
+@pytest.mark.parametrize("stored", ["nested/model.pdb", "nested\\model.pdb"])
+def test_manifest_relative_paths_prefer_bundle_over_working_directory(tmp_path, monkeypatch, stored):
+    bundle = tmp_path / "bundle"
+    (bundle / "nested").mkdir(parents=True)
+    expected = bundle / "nested/model.pdb"
+    expected.write_text("bundled", encoding="utf-8")
+    (tmp_path / "nested").mkdir()
+    (tmp_path / "nested/model.pdb").write_text("unrelated", encoding="utf-8")
+    (bundle / "model.pdb").write_text("wrong basename", encoding="utf-8")
+    manifest = bundle / "visualization_manifest.json"
+    manifest.write_text(json.dumps({"wt_structure": stored}), encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert resolve_manifest_bundle(manifest)["wt_structure"] == expected.resolve()
+
+
+@pytest.mark.parametrize("stored", ["old/outputs/wt_structure.pdb", "C:\\old\\outputs\\wt_structure.pdb"])
+def test_manifest_relocated_bundle_accepts_legacy_paths(tmp_path, monkeypatch, stored):
+    expected = tmp_path / "wt_structure.pdb"
+    expected.write_text("relocated", encoding="utf-8")
+    manifest = tmp_path / "visualization_manifest.json"
+    manifest.write_text(json.dumps({"wt_structure": stored}), encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert resolve_manifest_bundle(manifest)["wt_structure"] == expected.resolve()
 
 
 def test_pseudo_pdb_round_trip_preserves_residue_keys_and_coordinates(tmp_path):
