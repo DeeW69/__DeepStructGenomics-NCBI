@@ -1,5 +1,18 @@
 # Historique des versions
 
+## Non publié — stabilisation v0.2.x
+
+- Verrou universel `requirements-lock.txt` pour les dépendances du pipeline et
+  des tests, avec versions exactes, marqueurs Python/plateforme et empreintes
+  SHA-256 des distributions.
+- Installation à partir du verrou dans les jobs Linux / Python 3.10 et Windows /
+  Python 3.12 ; contrôle des empreintes, roues précompilées et `pip check`.
+- Collecte pytest limitée à `tests/` pour éviter les doublons si des copies du
+  code sont présentes dans les dossiers de sortie ou de construction.
+- Guide d'installation et de régénération dans `docs/dependencies.md` ; le verrou
+  est inclus dans les futures archives source. Les plages de dépendances du
+  paquet restent définies dans `pyproject.toml`.
+
 ## 0.2.0 — 6 octobre 2026
 
 [Release GitHub et artefacts](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.0)

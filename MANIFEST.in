@@ -1,4 +1,4 @@
-include LICENSE CHANGELOG.md requirements.txt
+include LICENSE CHANGELOG.md requirements.txt requirements-lock.txt
 recursive-include scripts *.py
 recursive-include data/examples *.json *.fasta
 recursive-include docs *.md *.png

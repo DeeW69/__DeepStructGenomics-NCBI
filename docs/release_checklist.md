@@ -8,9 +8,12 @@ Guide concis pour préparer, taguer et publier une version de DeepStructGenomics
    ```powershell
    git status -sb
    ```
-2. Lancer la suite de tests (adapter si nécessaire) :
+2. Installer le verrou dans un environnement neuf selon le
+   [guide des dépendances](dependencies.md), puis vérifier la compatibilité et
+   lancer les tests avec le Python de cet environnement :
    ```powershell
-   py -3 -m pytest
+   python -m pip check
+   python -m pytest
    ```
 3. Vérifier que `scripts/view_3d.py` et `docs/visualization_3d.md` sont alignés (options/behaviour).
    Relire rapidement les exemples, surtout si des flags ont évolué.
@@ -53,6 +56,8 @@ Guide concis pour préparer, taguer et publier une version de DeepStructGenomics
    ```
 
 ## 4. Release GitHub
+
+Vérifier que les deux jobs Linux/Windows réussissent pour le commit à publier.
 
 1. Depuis l’onglet **Releases**, cliquer « Draft a new release ».
 2. Sélectionner le tag `vX.Y.Z`, donner un titre clair (`DeepStructGenomics vX.Y.Z`).

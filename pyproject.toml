@@ -25,3 +25,6 @@ homepage = "https://github.com/DeeW69/__DeepStructGenomics-NCBI"
 
 [tool.setuptools.packages.find]
 include = ["deepstructgenomics*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

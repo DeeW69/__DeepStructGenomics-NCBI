@@ -2,15 +2,16 @@
 
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](pyproject.toml)
-[![Version du code v0.2.0](https://img.shields.io/badge/version_du_code-v0.2.0-blue.svg)](CHANGELOG.md)
+[![Release v0.2.0](https://img.shields.io/badge/release-v0.2.0-blue.svg)](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.0)
 [![Tests](https://github.com/DeeW69/__DeepStructGenomics-NCBI/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/DeeW69/__DeepStructGenomics-NCBI/actions/workflows/tests.yml)
 
 DeepStructGenomics-NCBI est un cadre de recherche et d'ingénierie logicielle dédié à l'étude structurale de l'ARN et de la régulation génomique à partir des données publiques du NCBI. L'objectif est de relier systématiquement séquences biologiques, structures (ARN et architecture 3D) et impact fonctionnel potentiel, afin de proposer des analyses mécanistiques exploitables en recherche biomédicale.
 
 **Projet en développement actif — README mis à jour le 6 octobre 2026.**
-La version du code est **v0.2.0**. Les notes et les exemples téléchargeables
+La dernière version publiée est **v0.2.0**. Les notes et les exemples téléchargeables
 sont regroupés dans la [release v0.2.0](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.0).
-La validation locale du 5 octobre 2026 compte **95 tests réussis** sous
+La stabilisation **v0.2.x** a commencé sur `main` avec le verrouillage des dépendances.
+La validation locale du 6 octobre 2026 compte **95 tests réussis** sous
 Windows / Python 3.11, ainsi qu'une vérification du paquet installé.
 Le [workflow de tests](.github/workflows/tests.yml) est configuré pour
 Linux / Python 3.10 et Windows / Python 3.12 ; le badge ci-dessus suit les
@@ -21,6 +22,18 @@ exécutions sur GitHub.
 [Roadmap](#roadmap) · [Contribuer](#suivi-et-contributions)
 
 ## Features par version
+
+### v0.2.x — en développement, non publiée
+
+- Versions des dépendances du pipeline et des tests fixées dans
+  [`requirements-lock.txt`](requirements-lock.txt), avec vérification SHA-256.
+- Même verrou utilisé en local et dans le workflow Linux/Windows, avec contrôle
+  de compatibilité via `pip check`.
+- [Guide des dépendances](docs/dependencies.md) pour installer cet environnement
+  et régénérer le verrou lors des prochaines mises à jour.
+
+Ces changements sont disponibles sur `main` ; ils ne font pas partie des
+archives de la release v0.2.0.
 
 ### v0.2.0 — publiée le 6 octobre 2026
 
@@ -84,11 +97,13 @@ et l'option `--output-dir`.
 DeepStructGenomics-NCBI/
 |-- README.md
 |-- requirements.txt
+|-- requirements-lock.txt
 |-- pyproject.toml
 |-- CHANGELOG.md
 |-- .github/workflows/tests.yml
 |-- docs/
 |   |-- demo.md
+|   |-- dependencies.md
 |   |-- visualization_3d.md
 |-- data/
 |   |-- examples/
@@ -176,24 +191,30 @@ Les structures 3D générées sont des projections contraintes (une sphère par 
 
 ## Installation rapide
 
-Python 3.10 ou ultérieur. Sous macOS / Linux :
+Depuis la branche `main`, avec Python 3.10 ou ultérieur. Le verrou est validé
+sous Linux / Python 3.10 et Windows / Python 3.12. Sous macOS / Linux :
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements.txt
+python -m pip install --require-hashes --only-binary=:all: -r requirements-lock.txt
 ```
 
 Sous Windows PowerShell, l'activation est facultative :
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install --require-hashes --only-binary=:all: -r requirements-lock.txt
 .\.venv\Scripts\python.exe scripts/run_demo.py
 ```
 
 L'installation initiale télécharge les dépendances. La démo fonctionne ensuite
 hors ligne et ne lance pas le viewer VTK.
+
+Les versions et empreintes sont partagées avec la CI. Le
+[guide des dépendances](docs/dependencies.md) détaille leur mise à jour et les
+limites selon la plateforme. Depuis le tag `v0.2.0`, qui précède ce verrou,
+utiliser `python -m pip install -r requirements.txt`.
 
 ## Utilisation du pipeline
 
@@ -288,9 +309,9 @@ retours, sans calendrier de livraison annoncé.
 - [x] Ajouter les tests d'intégration et le workflow Linux/Windows.
 - [x] Publier la release v0.2.0 avec son tag, ses notes et les exemples de sortie.
 
-### v0.2.x — stabilisation prévue
+### v0.2.x — stabilisation en cours
 
-- [ ] Verrouiller les versions des dépendances pour reproduire l'environnement de validation.
+- [x] Verrouiller les versions des dépendances pour reproduire l'environnement de validation.
 - [ ] Compléter la couverture du client NCBI : réponses vides, erreurs HTTP et délais dépassés.
 - [ ] Documenter la correspondance des indices entre séquences, rapports et fichiers de visualisation.
 
@@ -327,13 +348,13 @@ Sous Windows sans activation de l'environnement :
 .\.venv\Scripts\python.exe -m pytest
 ```
 
-Le [guide de démo](docs/demo.md), le
+Le [guide des dépendances](docs/dependencies.md), le [guide de démo](docs/demo.md), le
 [guide du viewer](docs/visualization_3d.md) et la
 [checklist de release](docs/release_checklist.md) complètent ce README.
 
 ## Principes directeurs
 
-- **Reproductibilité** : exemples fixes, paramètres documentés et tests automatisés ; le verrouillage des dépendances figure dans la roadmap.
+- **Reproductibilité** : exemples fixes, paramètres documentés, dépendances verrouillées avec empreintes et tests automatisés.
 - **Traçabilité** : chaque étape du pipeline enregistre ses paramètres et résultats intermédiaires (incluant les artefacts de visualisation).
 - **Modularité** : les modules peuvent évoluer indépendamment pour intégrer de nouvelles méthodes (predictors ARN, intégration Hi-C).
 - **Explicabilité** : prioriser des modèles interprétables, exposer les hypothèses biologiques et les incertitudes des prédictions.
