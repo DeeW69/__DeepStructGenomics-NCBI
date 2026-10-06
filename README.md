@@ -8,7 +8,8 @@
 DeepStructGenomics-NCBI est un cadre de recherche et d'ingénierie logicielle dédié à l'étude structurale de l'ARN et de la régulation génomique à partir des données publiques du NCBI. L'objectif est de relier systématiquement séquences biologiques, structures (ARN et architecture 3D) et impact fonctionnel potentiel, afin de proposer des analyses mécanistiques exploitables en recherche biomédicale.
 
 **Projet en développement actif — README mis à jour le 6 octobre 2026.**
-La version du code est **v0.2.0**, avec une release encore en préparation.
+La version du code est **v0.2.0**. Les notes et les exemples téléchargeables
+sont regroupés dans la [release v0.2.0](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.0).
 La validation locale du 5 octobre 2026 compte **95 tests réussis** sous
 Windows / Python 3.11, ainsi qu'une vérification du paquet installé.
 Le [workflow de tests](.github/workflows/tests.yml) est configuré pour
@@ -21,7 +22,7 @@ exécutions sur GitHub.
 
 ## Features par version
 
-### v0.2.0 — implémentée, release en préparation
+### v0.2.0 — publiée le 6 octobre 2026
 
 Cette version améliore la comparaison référence/mutant et la prise en main du
 pipeline. Les fonctionnalités ci-dessous sont présentes dans le code :
@@ -278,14 +279,14 @@ Les versions ci-dessous indiquent les priorités de développement. Les tâches
 non cochées restent à réaliser ; leur périmètre pourra évoluer selon les
 retours, sans calendrier de livraison annoncé.
 
-### v0.2.0 — consolidation en cours
+### v0.2.0 — consolidation terminée
 
 - [x] Accepter les fichiers FASTA et uniformiser la validation ADN/ARN.
 - [x] Intégrer les variations par position aux rapports Markdown et JSON.
 - [x] Fournir une démo hors ligne avec une illustration reproductible.
 - [x] Corriger les exports PDB et la compatibilité des annotations VTK.
 - [x] Ajouter les tests d'intégration et le workflow Linux/Windows.
-- [ ] Publier la release v0.2.0 avec son tag, ses notes et les exemples de sortie.
+- [x] Publier la release v0.2.0 avec son tag, ses notes et les exemples de sortie.
 
 ### v0.2.x — stabilisation prévue
 

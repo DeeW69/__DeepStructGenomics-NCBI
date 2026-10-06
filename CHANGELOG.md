@@ -1,6 +1,8 @@
 # Historique des versions
 
-## 0.2.0 — en préparation
+## 0.2.0 — 6 octobre 2026
+
+[Release GitHub et artefacts](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.0)
 
 ### Entrées FASTA et validation
 
