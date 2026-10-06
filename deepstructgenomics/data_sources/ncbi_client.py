@@ -50,7 +50,10 @@ class NCBIClient:
         )
 
     def _fetch_summary(self, accession: str) -> Dict[str, Any]:
-        """Retrieve structured metadata for an accession."""
+        """Retrieve metadata, tolerating empty or malformed successful responses.
+
+        Transport and HTTP failures still propagate to the caller.
+        """
 
         raw_json = self._call_endpoint(
             "esummary.fcgi",
@@ -62,12 +65,16 @@ class NCBIClient:
         )
         try:
             payload = raw_json.json()
-            result = payload.get("result", {})
-            uid = next((key for key in result.keys() if key != "uids"), accession)
-            summary = result.get(uid, {})
         except ValueError:
-            summary = {}
-        return summary
+            return {}
+        if not isinstance(payload, dict):
+            return {}
+        result = payload.get("result", {})
+        if not isinstance(result, dict):
+            return {}
+        uid = next((key for key in result if key != "uids"), accession)
+        summary = result.get(uid, {})
+        return summary if isinstance(summary, dict) else {}
 
     def _call_endpoint(self, endpoint: str, params: Dict[str, Any]):
         """Generic helper that attaches shared parameters to every request."""

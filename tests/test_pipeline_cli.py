@@ -1,4 +1,4 @@
-"""Exercise FASTA commands and actionable CLI errors without network access."""
+"""Exercise sequence commands and NCBI errors without network access."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+from unittest.mock import Mock
 
 import pytest
 import requests
@@ -18,7 +19,7 @@ SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "run_pipeline.py"
 @pytest.fixture
 def cli(tmp_path, monkeypatch):
     def reject_network(*args, **kwargs):
-        pytest.fail("FASTA commands must run offline")
+        pytest.fail("CLI tests must run offline")
 
     monkeypatch.setattr(requests.Session, "request", reject_network)
     monkeypatch.chdir(tmp_path)
@@ -96,6 +97,106 @@ def test_cli_rejects_ambiguous_or_missing_sources(cli, tmp_path, monkeypatch, ca
     assert error.value.code == 2
     assert "error:" in capsys.readouterr().err
     assert not list(output_dir.rglob("*"))
+
+
+@pytest.mark.parametrize("endpoint", ["efetch.fcgi", "esummary.fcgi"])
+@pytest.mark.parametrize("failure", ["http", "timeout", "connection"])
+def test_ncbi_request_failures_stop_before_prediction_and_export(
+    cli, tmp_path, monkeypatch, capsys, endpoint, failure
+):
+    api_key = "fake-key-for-offline-test"
+    email = "offline@example.invalid"
+    calls = []
+
+    def respond(session, method, url, **kwargs):
+        calls.append(url.rsplit("/", 1)[-1])
+        prepared = requests.Request(method, url, params=kwargs["params"]).prepare()
+        response = requests.Response()
+        response.request = prepared
+        response.url = prepared.url
+        response.status_code = 200
+        response._content = b">NC_TEST.1 DNA reference\nATGC\n"
+        if url.endswith(endpoint):
+            if failure == "http":
+                response.status_code = 503
+                response._content = b"Service Unavailable"
+            elif failure == "timeout":
+                raise requests.Timeout(f"Timeout: {prepared.url}", request=prepared)
+            else:
+                raise requests.ConnectionError(f"Connection failed: {prepared.url}", request=prepared)
+        return response
+
+    monkeypatch.setattr(requests.Session, "request", respond)
+    predict = Mock(side_effect=AssertionError("Prediction must wait for a complete NCBI record"))
+    monkeypatch.setattr("deepstructgenomics.pipeline.predict_secondary_structure", predict)
+    output_dir = tmp_path / "reports"
+    monkeypatch.setattr(sys, "argv", [
+        str(SCRIPT), "--accession", "NC_TEST.1", "--output-dir", str(output_dir),
+        "--ncbi-api-key", api_key, "--ncbi-email", email,
+    ])
+
+    with pytest.raises(SystemExit) as error:
+        cli.main()
+
+    assert "Erreur NCBI" in str(error.value.code)
+    captured = capsys.readouterr()
+    displayed = str(error.value.code) + captured.out + captured.err
+    assert api_key not in displayed
+    assert email not in displayed
+    assert "Traceback" not in displayed
+    assert "Rapports generes" not in displayed
+    assert calls == (["efetch.fcgi"] if endpoint == "efetch.fcgi" else ["efetch.fcgi", "esummary.fcgi"])
+    predict.assert_not_called()
+    assert not list(output_dir.rglob("*"))
+    assert not list((tmp_path / "outputs").rglob("*"))
+
+
+def test_ncbi_empty_fasta_is_a_readable_input_error_without_reports(cli, tmp_path, monkeypatch, capsys):
+    response = requests.Response()
+    response.status_code = 200
+    response._content = b""
+    request = Mock(return_value=response)
+    monkeypatch.setattr(requests.Session, "request", request)
+    output_dir = tmp_path / "reports"
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT), "--accession", "NC_TEST.1", "--output-dir", str(output_dir)])
+
+    with pytest.raises(SystemExit) as error:
+        cli.main()
+
+    assert error.value.code == 2
+    captured = capsys.readouterr()
+    assert "FASTA vide" in captured.err
+    assert "Traceback" not in captured.err
+    assert "Rapports generes" not in captured.out
+    assert request.call_count == 1
+    assert not list(output_dir.rglob("*"))
+
+
+def test_ncbi_empty_summary_still_exports_the_valid_sequence(cli, tmp_path, monkeypatch, capsys):
+    def respond(session, method, url, **kwargs):
+        response = requests.Response()
+        response.status_code = 200
+        if url.endswith("efetch.fcgi"):
+            response._content = b">NC_TEST.1 DNA reference\nATGC\n"
+        elif url.endswith("esummary.fcgi"):
+            response._content = b'{"result": null}'
+        else:
+            pytest.fail(f"Unexpected NCBI endpoint: {url}")
+        return response
+
+    monkeypatch.setattr(requests.Session, "request", respond)
+    output_dir = tmp_path / "reports"
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT), "--accession", "NC_TEST.1", "--output-dir", str(output_dir)])
+
+    cli.main()
+
+    report = json.loads((output_dir / "NC_TEST.1.json").read_text(encoding="utf-8"))
+    assert report["sequence"] == "AUGC"
+    assert report["description"] == "DNA reference"
+    assert report["annotations"]["metadata"] == {}
+    assert (output_dir / "NC_TEST.1.md").is_file()
+    assert (output_dir / "NC_TEST.1/visualization/visualization_manifest.json").is_file()
+    assert "Rapports generes" in capsys.readouterr().out
 
 
 @pytest.mark.parametrize(

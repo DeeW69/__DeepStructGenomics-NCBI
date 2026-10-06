@@ -2,6 +2,16 @@
 
 ## Non publié — stabilisation v0.2.x
 
+- Tests hors réseau du client NCBI : réponses FASTA vides ou invalides,
+  résumés de métadonnées vides ou mal formés, erreurs HTTP 400/404/429/500 et
+  délais dépassés sur EFetch et ESummary.
+- Correction de la lecture des résumés JSON contenant `null`, une liste ou une
+  entrée de métadonnées non objet : la séquence valide est conservée avec des
+  métadonnées `{}`, comme pour une réponse vide ou un JSON invalide.
+- Tests de la CLI pour les erreurs HTTP, de connexion et de délai : arrêt avant
+  la prédiction et l'export, message lisible sans afficher l'email ni la clé API.
+  Les erreurs HTTP et réseau continuent à se propager dans l'API
+  Python ; elles ne sont pas traitées comme des métadonnées absentes.
 - Verrou universel `requirements-lock.txt` pour les dépendances du pipeline et
   des tests, avec versions exactes, marqueurs Python/plateforme et empreintes
   SHA-256 des distributions.

@@ -10,9 +10,10 @@ DeepStructGenomics-NCBI est un cadre de recherche et d'ingénierie logicielle d�
 **Projet en développement actif — README mis à jour le 6 octobre 2026.**
 La dernière version publiée est **v0.2.0**. Les notes et les exemples téléchargeables
 sont regroupés dans la [release v0.2.0](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.0).
-La stabilisation **v0.2.x** a commencé sur `main` avec le verrouillage des dépendances.
-La validation locale du 6 octobre 2026 compte **95 tests réussis** sous
-Windows / Python 3.11, ainsi qu'une vérification du paquet installé.
+La stabilisation **v0.2.x** avance sur `main` : dépendances verrouillées et
+couverture des erreurs du client NCBI.
+La validation locale du 6 octobre 2026 compte **132 tests réussis** sous
+Windows / Python 3.11.
 Le [workflow de tests](.github/workflows/tests.yml) est configuré pour
 Linux / Python 3.10 et Windows / Python 3.12 ; le badge ci-dessus suit les
 exécutions sur GitHub.
@@ -31,6 +32,10 @@ exécutions sur GitHub.
   de compatibilité via `pip check`.
 - [Guide des dépendances](docs/dependencies.md) pour installer cet environnement
   et régénérer le verrou lors des prochaines mises à jour.
+- Tests NCBI hors réseau : réponses vides, erreurs HTTP, délais dépassés et
+  erreurs de connexion, jusqu'au comportement de la CLI.
+- Conservation d'une séquence valide lorsque le résumé NCBI est vide ou
+  présente un format JSON inattendu, avec des métadonnées vides dans le rapport.
 
 Ces changements sont disponibles sur `main` ; ils ne font pas partie des
 archives de la release v0.2.0.
@@ -226,6 +231,20 @@ python scripts/run_pipeline.py --sequence AUGGCUACG --label test_seq --output-di
 
 Les rapports `.json` et `.md` sont écrits dans le dossier de sortie, tandis que les artefacts de visualisation sont placés dans `outputs/<identifiant>/visualization/`.
 
+### Réponses et erreurs NCBI
+
+Avec `--accession`, le client récupère la séquence FASTA puis son résumé de
+métadonnées. Un FASTA vide ou invalide arrête l'analyse. Si le résumé répond
+avec succès mais contient un JSON vide, invalide ou sans objet de métadonnées
+exploitable, la séquence reste utilisable et les métadonnées du rapport valent
+`{}`.
+
+Une erreur HTTP, un dépassement de délai ou une erreur de connexion à l'une
+des deux étapes interrompt l'analyse avant la création des rapports. La CLI
+retourne une erreur NCBI ; l'API Python propage l'exception `requests`
+correspondante. Les [tests du client](tests/test_ncbi_client.py) et les
+[tests de la CLI](tests/test_pipeline_cli.py) simulent ces cas sans contacter le NCBI.
+
 ### Charger des fichiers FASTA
 
 Depuis la racine du dépôt, cette commande fonctionne sous Windows, macOS et
@@ -312,7 +331,7 @@ retours, sans calendrier de livraison annoncé.
 ### v0.2.x — stabilisation en cours
 
 - [x] Verrouiller les versions des dépendances pour reproduire l'environnement de validation.
-- [ ] Compléter la couverture du client NCBI : réponses vides, erreurs HTTP et délais dépassés.
+- [x] Compléter la couverture du client NCBI : réponses vides, erreurs HTTP et délais dépassés.
 - [ ] Documenter la correspondance des indices entre séquences, rapports et fichiers de visualisation.
 
 ### v0.3.0 — ergonomie prévue
