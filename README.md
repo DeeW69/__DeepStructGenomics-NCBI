@@ -2,15 +2,15 @@
 
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](pyproject.toml)
-[![Release v0.2.0](https://img.shields.io/badge/release-v0.2.0-blue.svg)](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.0)
+[![Release v0.2.1](https://img.shields.io/badge/release-v0.2.1-blue.svg)](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.1)
 [![Tests](https://github.com/DeeW69/__DeepStructGenomics-NCBI/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/DeeW69/__DeepStructGenomics-NCBI/actions/workflows/tests.yml)
 
 DeepStructGenomics-NCBI est un cadre de recherche et d'ingénierie logicielle dédié à l'étude structurale de l'ARN et de la régulation génomique à partir des données publiques du NCBI. L'objectif est de relier systématiquement séquences biologiques, structures (ARN et architecture 3D) et impact fonctionnel potentiel, afin de proposer des analyses mécanistiques exploitables en recherche biomédicale.
 
 **Projet en développement actif — README mis à jour le 6 octobre 2026.**
-La dernière version publiée est **v0.2.0**. Les notes et les exemples téléchargeables
-sont regroupés dans la [release v0.2.0](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.0).
-Les étapes de stabilisation **v0.2.x** sont terminées sur `main` : dépendances
+La dernière version publiée est **v0.2.1**. Les notes et les exemples téléchargeables
+sont regroupés dans la [release v0.2.1](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.1).
+Cette version regroupe les étapes de stabilisation **v0.2.x** : dépendances
 verrouillées, couverture des erreurs NCBI et guide de numérotation des positions.
 La validation locale du 6 octobre 2026 compte **132 tests réussis** sous
 Windows / Python 3.11.
@@ -24,7 +24,7 @@ exécutions sur GitHub.
 
 ## Features par version
 
-### v0.2.x — changements non publiés
+### v0.2.1 — publiée le 6 octobre 2026
 
 - Versions des dépendances du pipeline et des tests fixées dans
   [`requirements-lock.txt`](requirements-lock.txt), avec vérification SHA-256.
@@ -40,8 +40,9 @@ exécutions sur GitHub.
   conventions 0-based et 1-based entre séquences, structures, rapports JSON/Markdown
   et fichiers de visualisation PDB/VTK.
 
-Ces changements sont disponibles sur `main` ; ils ne font pas partie des
-archives de la release v0.2.0.
+Cette version de stabilisation conserve les formats de sortie de v0.2.0.
+Les [notes de release](docs/releases/v0.2.1.md) détaillent les changements et
+la procédure d'installation.
 
 ### v0.2.0 — publiée le 6 octobre 2026
 
@@ -199,7 +200,7 @@ Les structures 3D générées sont des projections contraintes (une sphère par 
 
 ## Installation rapide
 
-Depuis la branche `main`, avec Python 3.10 ou ultérieur. Le verrou est validé
+Depuis le tag `v0.2.1` ou la branche `main`, avec Python 3.10 ou ultérieur. Le verrou est validé
 sous Linux / Python 3.10 et Windows / Python 3.12. Sous macOS / Linux :
 
 ```bash
@@ -331,11 +332,12 @@ retours, sans calendrier de livraison annoncé.
 - [x] Ajouter les tests d'intégration et le workflow Linux/Windows.
 - [x] Publier la release v0.2.0 avec son tag, ses notes et les exemples de sortie.
 
-### v0.2.x — stabilisation terminée sur `main`
+### v0.2.1 — stabilisation publiée
 
 - [x] Verrouiller les versions des dépendances pour reproduire l'environnement de validation.
 - [x] Compléter la couverture du client NCBI : réponses vides, erreurs HTTP et délais dépassés.
 - [x] Documenter la correspondance des indices entre séquences, rapports et fichiers de visualisation.
+- [x] Publier la release v0.2.1 avec le verrou des dépendances et les guides.
 
 ### v0.3.0 — ergonomie prévue
 

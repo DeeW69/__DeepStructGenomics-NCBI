@@ -1,6 +1,8 @@
 # Historique des versions
 
-## Non publié — stabilisation v0.2.x
+## 0.2.1 — 6 octobre 2026
+
+[Release GitHub et artefacts](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.1)
 
 - Tests hors réseau du client NCBI : réponses FASTA vides ou invalides,
   résumés de métadonnées vides ou mal formés, erreurs HTTP 400/404/429/500 et

@@ -35,6 +35,10 @@ Guide concis pour préparer, taguer et publier une version de DeepStructGenomics
 ## 2. Versioning
 
 - Convention : `vMAJOR.MINOR.PATCH` (ex. `v0.1.0`, `v0.2.0`, `v1.0.0`).
+- `v0.2.x` désigne une série de versions ; chaque release et chaque tag utilisent
+  un numéro précis, par exemple `v0.2.1`.
+- Aligner la version de `pyproject.toml` (sans préfixe `v`), le README et le
+  changelog, puis rédiger `docs/releases/vX.Y.Z.md` avant de construire les paquets.
 - Incréments recommandés :
   - **PATCH** : corrections mineures, docs, refactors sans impact API.
   - **MINOR** : nouvelles fonctionnalités rétro-compatibles, nouveaux artefacts.
