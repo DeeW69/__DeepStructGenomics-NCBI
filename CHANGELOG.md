@@ -22,6 +22,11 @@
 - Guide d'installation et de régénération dans `docs/dependencies.md` ; le verrou
   est inclus dans les futures archives source. Les plages de dépendances du
   paquet restent définies dans `pyproject.toml`.
+- Documentation de la numérotation des positions dans
+  `docs/coordinates.md` : correspondance entre conventions 0-based
+  (algorithmes Python, champs historiques JSON) et 1-based (validation des
+  séquences, rapports Markdown, hotspots, résidus PDB, scores et viewer VTK),
+  avec tableau de synthèse, exemple pas à pas sur la démo 12 nt et formules de conversion.
 
 ## 0.2.0 — 6 octobre 2026
 

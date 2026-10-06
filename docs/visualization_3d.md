@@ -104,6 +104,10 @@ outputs/
 }
 ```
 
+Consulter le [guide de numérotation des positions](coordinates.md) pour la table
+de correspondance complète entre numéros de résidus PDB, fichiers de scores,
+connecteurs de paires et rapports.
+
 ## Limites scientifiques & hierarchie de confiance
 
 - **Structure secondaire = socle (niveau eleve)** : les scores sont calcules a partir des appariements dot-bracket valides. Toute interpretation doit partir de ce niveau.

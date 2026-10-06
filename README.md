@@ -10,8 +10,8 @@ DeepStructGenomics-NCBI est un cadre de recherche et d'ingénierie logicielle d�
 **Projet en développement actif — README mis à jour le 6 octobre 2026.**
 La dernière version publiée est **v0.2.0**. Les notes et les exemples téléchargeables
 sont regroupés dans la [release v0.2.0](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.0).
-La stabilisation **v0.2.x** avance sur `main` : dépendances verrouillées et
-couverture des erreurs du client NCBI.
+Les étapes de stabilisation **v0.2.x** sont terminées sur `main` : dépendances
+verrouillées, couverture des erreurs NCBI et guide de numérotation des positions.
 La validation locale du 6 octobre 2026 compte **132 tests réussis** sous
 Windows / Python 3.11.
 Le [workflow de tests](.github/workflows/tests.yml) est configuré pour
@@ -24,7 +24,7 @@ exécutions sur GitHub.
 
 ## Features par version
 
-### v0.2.x — en développement, non publiée
+### v0.2.x — changements non publiés
 
 - Versions des dépendances du pipeline et des tests fixées dans
   [`requirements-lock.txt`](requirements-lock.txt), avec vérification SHA-256.
@@ -36,6 +36,9 @@ exécutions sur GitHub.
   erreurs de connexion, jusqu'au comportement de la CLI.
 - Conservation d'une séquence valide lorsque le résumé NCBI est vide ou
   présente un format JSON inattendu, avec des métadonnées vides dans le rapport.
+- [Guide de numérotation des positions](docs/coordinates.md) explicitant les
+  conventions 0-based et 1-based entre séquences, structures, rapports JSON/Markdown
+  et fichiers de visualisation PDB/VTK.
 
 Ces changements sont disponibles sur `main` ; ils ne font pas partie des
 archives de la release v0.2.0.
@@ -328,11 +331,11 @@ retours, sans calendrier de livraison annoncé.
 - [x] Ajouter les tests d'intégration et le workflow Linux/Windows.
 - [x] Publier la release v0.2.0 avec son tag, ses notes et les exemples de sortie.
 
-### v0.2.x — stabilisation en cours
+### v0.2.x — stabilisation terminée sur `main`
 
 - [x] Verrouiller les versions des dépendances pour reproduire l'environnement de validation.
 - [x] Compléter la couverture du client NCBI : réponses vides, erreurs HTTP et délais dépassés.
-- [ ] Documenter la correspondance des indices entre séquences, rapports et fichiers de visualisation.
+- [x] Documenter la correspondance des indices entre séquences, rapports et fichiers de visualisation.
 
 ### v0.3.0 — ergonomie prévue
 
@@ -367,7 +370,8 @@ Sous Windows sans activation de l'environnement :
 .\.venv\Scripts\python.exe -m pytest
 ```
 
-Le [guide des dépendances](docs/dependencies.md), le [guide de démo](docs/demo.md), le
+Le [guide des dépendances](docs/dependencies.md), le
+[guide des coordonnées](docs/coordinates.md), le [guide de démo](docs/demo.md), le
 [guide du viewer](docs/visualization_3d.md) et la
 [checklist de release](docs/release_checklist.md) complètent ce README.
 

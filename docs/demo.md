@@ -71,7 +71,8 @@ outputs_demo/
 Ouvrir `offline_demo.md` pour lire le tableau des positions les plus modifiées.
 Le champ `impact_summary` du rapport JSON et le fichier
 `visualization/impact_summary.json` contiennent le même résumé, utilisable
-dans d'autres analyses. Les hotspots utilisent des positions comptées depuis 1.
+dans d'autres analyses. Les hotspots utilisent des positions comptées depuis 1
+(voir le [guide de numérotation](coordinates.md) pour la correspondance détaillée).
 
 Le score par position dépend de l'appariement prédit, de la base et de la
 distance entre partenaires. Les deltas mesurent des différences de cette
