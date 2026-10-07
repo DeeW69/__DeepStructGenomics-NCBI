@@ -1,0 +1,324 @@
+{
+  "source": {
+    "database": "bpRNA-1m v1.0, PDB subset",
+    "url": "https://bprna.cgrb.oregonstate.edu/bpRNA_1m/stFiles.zip",
+    "publication": "https://doi.org/10.1093/nar/gky285",
+    "archive_sha256": "f1c8bb4419c1f231e3422fffcf6ddebc097abfc1cc7fd359cfbcede2d2c25603"
+  },
+  "selection": {
+    "seed": 45,
+    "sample_size": 30,
+    "pdb_records": 669,
+    "eligible_unique_sequences": 207,
+    "excluded": {
+      "pseudoknot_or_extended_notation": 145,
+      "length_outside_20_120": 209,
+      "duplicate_sequence": 70,
+      "non_ACGU_sequence": 38
+    },
+    "policy": "Numeric ID order; 20-120 nt; ACGU; .() only; exact sequence deduplication; seeded random sample before prediction.",
+    "limitations": "Small experimental-structure-derived sample, not family-balanced or homology-filtered; no claim of independence from ViennaRNA parameter fitting."
+  },
+  "records": [
+    {
+      "id": "bpRNA_PDB_4",
+      "sequence": "GGGUGACUCCAGAGGUCGAGAGACCGGAGAUAUCACCC",
+      "reference": "((((((((((...((((....))))))))...))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_4.st",
+        "sha256": "fa00743e9e222280a33915c1f8f9c5835e715d116fdb20e66e7dfda55f252a04",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_11",
+      "sequence": "GGAGUGCUUCAACAGUGCUUGGACGCUCC",
+      "reference": "((((((.((.(((...).)).))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_11.st",
+        "sha256": "0ac511468ad03b57ca782f7f641443da5531a267b9abd4177efec06322104d20",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_19",
+      "sequence": "GGCGACGGUGUAAAAAUCUCGCC",
+      "reference": "(((((.((((....)))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_19.st",
+        "sha256": "84e63e12d9fc6c3eee5b47c203822a971a1cc2ef1d003230e80b0c31944f6256",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_33",
+      "sequence": "GUGCGAAGACGAAAGUCCGAGCGC",
+      "reference": "((((((((((....))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_33.st",
+        "sha256": "c0500508cd68dd8a8f7bd1694c923eb7304fd3ad06f82871fe448bd08c8e522f",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_40",
+      "sequence": "GGCAGUGUGAGUACCUUCACACGUC",
+      "reference": "..(.((((((......)))))))..",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_40.st",
+        "sha256": "04aeab1988db7d79899511e009fedd4ebba44d8122b9c6f27f60dcf0ff37c7ec",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_44",
+      "sequence": "GGAUCCCGACUGGCGAGAGCCAGGUAACGAAUGGAUCC",
+      "reference": "((((((((.((((((..))))))....))...))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_44.st",
+        "sha256": "603222495848c9617fea6cac6e48ce92f6f9ce4d18c2603b872c7ca7a13114fe",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_45",
+      "sequence": "GGAAGUCCGGUCUUCGGACCGGCUUCC",
+      "reference": "(((((.(((((((..))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_45.st",
+        "sha256": "e66af0aef1006fd505e80358e92858c1aabe3fc6da63f792752e5ca45ac7b85d",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_46",
+      "sequence": "GGAAGUUCGGUCUUCGGACCGGCUUCC",
+      "reference": "((((((.((((((..))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_46.st",
+        "sha256": "f640b8538bdecb8bf8518998a2b0ba2d99e9eae7c8a222a7e31dd4415cdab3df",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_82",
+      "sequence": "GGGGCUCUUCGGAGCUCCACCA",
+      "reference": "((((((((..))))))))....",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_82.st",
+        "sha256": "83dd02ff7c2a263db442dfe6dba83ce820b1adcc1dad06a962c71b49bf0695f6",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_84",
+      "sequence": "AGUAGAAACAAGGCUUCGGCCUGCUUUUGCU",
+      "reference": "((.((((.(..(((....))).).)))).))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_84.st",
+        "sha256": "4f9d85d4589728b0407fb8650210a879f66c2f86b3021118a7cc8c3d3afd46e2",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_93",
+      "sequence": "CAGACUUCGGUCGCAGAGAUGG",
+      "reference": "(.((((..)))))(((..))).",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_93.st",
+        "sha256": "a3abfd9ed477f2d3dc1e34377c7af38d41a7fa3cc4df4281b3853d1a4aa4ab32",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_97",
+      "sequence": "GGCGUCAUGAGUCCAUGGCGCC",
+      "reference": "((((((((((..))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_97.st",
+        "sha256": "d49b4f928a7085ab325177ee3948fa97f940b7cdbdc2dfab4bf2b34cd073bd5b",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_105",
+      "sequence": "GGCGCUCAAUGCUCUUCGGAGACGACCGCC",
+      "reference": "(((((((.(.(((((..)))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_105.st",
+        "sha256": "26298a02b11e54e0581aed63d6e4e2208f46103ff561db256ec41376245eb2f0",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_130",
+      "sequence": "GGACUCGGCUUGCUGGAGACGGCAAGAGGCGAGUCC",
+      "reference": "((((((((((((((((..)))))))))..)))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_130.st",
+        "sha256": "3a281b715df7e504697badcecabc72c5e3af884fe29d55bb6016d015ed3c9831",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_153",
+      "sequence": "UGCUCCUAGUACGAGAGGACCGGAGUG",
+      "reference": ".(((((..()(((..)))...))))).",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_153.st",
+        "sha256": "e4400205abf4d5e670c5a63c46abfa886ea1a9139256cf139d6b91fe382a8151",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_158",
+      "sequence": "GCGGAUUUAGCUCAGUUGGGAGAGCGCCAGACUGAAGAUCUGGAGGUCCUGUGUUCGAUCCACAGAAUUCGCACC",
+      "reference": "...........................................................................",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_158.st",
+        "sha256": "e9cea6e1e56931fcfd2954459fa54e29ae9688185cf54fb3660f6bce94489d3c",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_162",
+      "sequence": "GGAGGACAUCCCUCACGGGUGACCGUGGUCCUCC",
+      "reference": "(((((((......((((((..)))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_162.st",
+        "sha256": "65d847c93febebb8952a4d548c237bd109089722b59ca02d1946b1085ea751a2",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_167",
+      "sequence": "GCGCUCUGAUGAGGCCGCAAGGCCGAAACUGCCGCAAGGCAGUCAGCGC",
+      "reference": "(((((....(..(((((..))))).).(((((((..))))))).)))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_167.st",
+        "sha256": "b762d275d32480654a6ccdc6d771806cb1c1eda5e7f68db56d6d184156f0d524",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_174",
+      "sequence": "GGCGGUACUAGUUGAGAAACUAGCUCUGUAUCUGGCGGACCCGUGGUGGAACUGUGAAGUUCGGAACACCCGGCCGCAACCCUGGGAGAGGUCCCAGGGUU",
+      "reference": "((((((.(((((((..)))))))).)))))....((((..(((.((((((((((..))))))....)))))))))))((((((((((....))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_174.st",
+        "sha256": "2f283351ccf9d79ff3e03d3b9dd69a90bc9db9bff396a0d6e8515852bfa36a16",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_190",
+      "sequence": "GGGCUAGCACUCUGGUAUUACGGUACCUUUGUGCGCCC",
+      "reference": "((((..(((((((((((((..)))))))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_190.st",
+        "sha256": "01955b8f2b8af774ab4b0197e281871f70af2b21ad755e00082c66e40fa98a22",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_269",
+      "sequence": "GGCCAUCUUGCUCUUCGGAGGAUUUGGCC",
+      "reference": "((((((.(((((((..)))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_269.st",
+        "sha256": "b83378fd2ee3c8e138e26ce7d6178ad60df9c946c1fcb33c1115408be1ec122d",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_272",
+      "sequence": "GGACCUCUCGAAAGAGAUGUCC",
+      "reference": "((((((((((..))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_272.st",
+        "sha256": "261247a79f99cf9adda91a476cebeb134e5590180ccbb929d91c0cad6737db52",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_276",
+      "sequence": "GGGAAGGCGCUUCGGCGUCGGCCC",
+      "reference": "(((((((((((..)))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_276.st",
+        "sha256": "73a00ca9e7adf992d78e7e1b2d95911697c9de538698ddb890d387ba4e239b7d",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_311",
+      "sequence": "GGAGGUAGUAGGUCGAAAGACCGUUCUACACUCC",
+      "reference": "((((((((.(((((....)))).).)))).))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_311.st",
+        "sha256": "46f83f2328244a952bbdcba2763c53b3462750d038811c03f4fe784ac8140fd5",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_319",
+      "sequence": "GGAGGAACUACUGUCUUCCUUCGGGUCGUGCAGCCUCC",
+      "reference": "((((((..).((((((((((..)))))).)))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_319.st",
+        "sha256": "9f7961dd84dc2d3ee572e401815489b1eb2113bf3381340fe50e09ce0f61b679",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_382",
+      "sequence": "GGGCGAGGGUCUCCUCUGAGUGAUUGACUACCCGUCAGCGGGGGUCUUUCAUUUGGGGGCUCGUGCCC",
+      "reference": "(((((.((((((((..(..((((((((((.(((((..)))))))))))))))).)))))))).)))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_382.st",
+        "sha256": "fa68c580d038a2734e2239aa203d840e6ce2a13e5e3c2921573d4eb2c93410e2",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_389",
+      "sequence": "GCUGAGCUCGAAAGAGCAAUGAUGUC",
+      "reference": ".((((((((....))))...))))..",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_389.st",
+        "sha256": "1aa7ae4c6139493887dac38c15dac5625362b0a06fb2b74b56011d7d4116df7b",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_398",
+      "sequence": "GGAAUUUAUGAGUACGUAGAGUAUAAUUAGUCUUCGGACUUCCUUAUACUUAUAUACUUAUAGAUUCC",
+      "reference": "(((((((((((((((....((((((..((((((..))))))...))))).).).))))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_398.st",
+        "sha256": "0401ce9f68e9a5f737a929f8926a19241a01682d11d653d6f7c88d4f64e65dbf",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_445",
+      "sequence": "GCCCGGAUAGCUCAGUCGGUAGAGCAGGGGAUUGAAAAUCCCCGUGUCCUUGGUUCGAUUCCGAGUCCGGGCACCA",
+      "reference": "(((((((..((((........))))((((((.......))))))....((((((...)..))))))))))))....",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_445.st",
+        "sha256": "9eb755b488e59d65b8abc38c2b2e8594e8f3358e8bc37a36b42001c32da80c87",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    },
+    {
+      "id": "bpRNA_PDB_667",
+      "sequence": "GGUGUUGACUGUUGAAUCUCAUGGCAACACC",
+      "reference": "(((((((.((...(.)......)))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_667.st",
+        "sha256": "3f745148b70cde89af53c98efd3463efa7dd82b3457230f0d5ffbfd651509a39",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      }
+    }
+  ]
+}

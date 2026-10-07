@@ -34,3 +34,9 @@ jobs:
         run: python -m pip check
       - name: Run tests without a graphical viewer
         run: python -m pytest
+      - name: Install optional research methods
+        run: "python -m pip install --require-hashes --only-binary=:all: -r requirements-research-lock.txt"
+      - name: Check research dependency compatibility
+        run: python -m pip check
+      - name: Run tests with research methods
+        run: python -m pytest

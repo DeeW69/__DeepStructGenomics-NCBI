@@ -1,0 +1,4 @@
+# Optional research methods; core dependency versions are constrained separately.
+ViennaRNA==2.7.2
+scipy==1.15.3 ; python_version < '3.11'
+scipy==1.17.1 ; python_version >= '3.11'

@@ -53,7 +53,7 @@ def greedy_pairs(sequence, min_loop_length=3):
     return pairs
 
 
-def evaluate_reference_set(path: str | Path, *, config=None):
+def evaluate_reference_set(path: str | Path, *, config=None, viennarna=False):
     """Evaluate Nussinov, greedy and all-unpaired controls plus supplied predictions.
 
     Every record must contain all external methods, preventing unequal comparisons.
@@ -66,6 +66,13 @@ def evaluate_reference_set(path: str | Path, *, config=None):
     if not dataset.get("source"):
         raise ValueError("La provenance source du jeu est requise.")
     config = config or RNAConfig()
+    predictor = None
+    if viennarna:
+        from deepstructgenomics.rna.vienna import ViennaPredictor
+        predictor = ViennaPredictor()
+    method_provenance = dict(dataset.get("method_provenance", {}))
+    if predictor:
+        method_provenance["viennarna_mfe"] = predictor.provenance
     records, seen, external_methods = [], set(), None
     totals = {}
     for record in dataset["records"]:
@@ -93,6 +100,12 @@ def evaluate_reference_set(path: str | Path, *, config=None):
         }
         if set(external) & predictions.keys():
             raise ValueError("Nom de methode externe reserve.")
+        energy = None
+        if predictor:
+            if "viennarna_mfe" in external:
+                raise ValueError("viennarna_mfe est reserve a la methode executee.")
+            structure, energy = predictor.predict(sequence)
+            predictions["viennarna_mfe"] = dot_bracket_pairs(structure, len(sequence))
         predictions.update({name: dot_bracket_pairs(value, len(sequence)) for name, value in external.items()})
         metrics = {}
         for name, pairs in predictions.items():
@@ -100,7 +113,16 @@ def evaluate_reference_set(path: str | Path, *, config=None):
             counts = totals.setdefault(name, {"tp": 0, "fp": 0, "fn": 0})
             for key in counts:
                 counts[key] += metrics[name][key]
-        records.append({"id": identifier, "length": len(sequence), "methods": metrics})
+        structures = {}
+        for name, pairs in predictions.items():
+            symbols = ["."] * len(sequence)
+            for left, right in pairs:
+                symbols[left], symbols[right] = "(", ")"
+            structures[name] = "".join(symbols)
+        records.append({"id": identifier, "length": len(sequence), "methods": metrics,
+                        "sequence": sequence, "reference": record["reference"],
+                        "provenance": record.get("provenance", {}),
+                        "predictions": structures, "viennarna_mfe_kcal_mol": energy})
     micro = {}
     for name, counts in totals.items():
         tp, fp, fn = (counts[key] for key in ("tp", "fp", "fn"))
@@ -110,6 +132,6 @@ def evaluate_reference_set(path: str | Path, *, config=None):
                        "f1": 2 * tp / (2 * tp + fp + fn) if 2 * tp + fp + fn else None}
     return {"source": dataset["source"], "dataset_sha256": hashlib.sha256(raw).hexdigest(),
             "generated_at": datetime.now(timezone.utc).isoformat(), "parameters": asdict(config),
-            "method_provenance": dataset.get("method_provenance", {}),
+            "method_provenance": method_provenance,
             "records": records, "micro_average": micro,
             "metric_policy": "Exact base pairs; undefined ratios are null; no pseudoknots."}

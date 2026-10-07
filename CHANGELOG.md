@@ -1,5 +1,11 @@
 # Historique des versions
 
+## 0.4.5 — 7 octobre 2026
+
+- Benchmark sur 30 références bpRNA/PDB, provenance et sélection reproductible.
+- Exécution optionnelle de ViennaRNA 2.7.2 et archivage des prédictions/métriques.
+- Dépendances de recherche optionnelles avec verrou séparé.
+
 ## 0.4.4 — 7 octobre 2026 — release globale v0.4.x
 
 - Import exploratoire Hi-C TSV avec assemblage/résolution explicites, contrôles

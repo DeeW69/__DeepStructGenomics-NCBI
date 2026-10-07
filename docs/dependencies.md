@@ -48,6 +48,28 @@ automatiquement ce verrou.
 
 ## Régénérer le verrou
 
+### Extensions de recherche (depuis v0.4.5)
+
+Après le verrou principal, installer les prédicteurs et statistiques facultatifs :
+
+```bash
+python -m pip install --require-hashes --only-binary=:all: -r requirements-research-lock.txt
+```
+
+ViennaRNA 2.7.2 exécute la prédiction MFE. SciPy fournit les probabilités statistiques
+de l'analyse Hi-C avancée : 1.15.3 sous Python 3.10, 1.17.1 à partir de Python 3.11
+pour rester compatible avec les versions NumPy du verrou principal.
+Ces versions sont aussi déclarées dans l'extra `research` du paquet. La CI teste
+le socle avant leur installation, puis l'ensemble avec ces extensions.
+
+Le verrou optionnel se régénère en conservant les contraintes du socle :
+
+```bash
+uv pip compile requirements-research.txt --constraint requirements-lock.txt --universal --python-version 3.10 --generate-hashes --output-file requirements-research-lock.txt --no-python-downloads
+```
+
+### Verrou principal
+
 La version du générateur utilisée est **uv 0.12.5**. `uv` est nécessaire seulement
 pour régénérer le fichier, pas pour installer le projet ou lancer les tests.
 Si besoin, l'installer dans un environnement de maintenance distinct :

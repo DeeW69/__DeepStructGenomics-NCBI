@@ -1,0 +1,1626 @@
+{
+  "source": {
+    "database": "bpRNA-1m v1.0, PDB subset",
+    "url": "https://bprna.cgrb.oregonstate.edu/bpRNA_1m/stFiles.zip",
+    "publication": "https://doi.org/10.1093/nar/gky285",
+    "archive_sha256": "f1c8bb4419c1f231e3422fffcf6ddebc097abfc1cc7fd359cfbcede2d2c25603"
+  },
+  "dataset_sha256": "b03e4626c9eecd83fd81205e0a7d938edfb343496604770792fff69a8b6b3b76",
+  "generated_at": "2026-10-07T15:28:53.973321+00:00",
+  "parameters": {
+    "min_loop_length": 3,
+    "gc_weight": 0.5,
+    "au_weight": 0.4,
+    "gu_weight": 0.2
+  },
+  "method_provenance": {
+    "viennarna_mfe": {
+      "software": "ViennaRNA",
+      "version": "2.7.2",
+      "algorithm": "fold_compound.mfe",
+      "temperature_celsius": 37.0,
+      "dangles": 2,
+      "noLP": false,
+      "parameters": "library default Turner 2004",
+      "constraints": "none",
+      "executed": true
+    }
+  },
+  "records": [
+    {
+      "id": "bpRNA_PDB_4",
+      "length": 38,
+      "methods": {
+        "nussinov": {
+          "tp": 13,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.9285714285714286,
+          "recall": 0.9285714285714286,
+          "f1": 0.9285714285714286
+        },
+        "greedy": {
+          "tp": 11,
+          "fp": 1,
+          "fn": 3,
+          "precision": 0.9166666666666666,
+          "recall": 0.7857142857142857,
+          "f1": 0.8461538461538461
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 14,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 14,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "sequence": "GGGUGACUCCAGAGGUCGAGAGACCGGAGAUAUCACCC",
+      "reference": "((((((((((...((((....))))))))...))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_4.st",
+        "sha256": "fa00743e9e222280a33915c1f8f9c5835e715d116fdb20e66e7dfda55f252a04",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "((((((((((...((((....)))))))).)..)))))",
+        "greedy": "(((((((((((....)(....)...))))...))))))",
+        "unpaired": "......................................",
+        "viennarna_mfe": "((((((((((...((((....))))))))...))))))"
+      },
+      "viennarna_mfe_kcal_mol": -18.799999237060547
+    },
+    {
+      "id": "bpRNA_PDB_11",
+      "length": 29,
+      "methods": {
+        "nussinov": {
+          "tp": 11,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.9166666666666666,
+          "recall": 1.0,
+          "f1": 0.9565217391304348
+        },
+        "greedy": {
+          "tp": 6,
+          "fp": 4,
+          "fn": 5,
+          "precision": 0.6,
+          "recall": 0.5454545454545454,
+          "f1": 0.5714285714285714
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 11,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 10,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.9090909090909091,
+          "recall": 0.9090909090909091,
+          "f1": 0.9090909090909091
+        }
+      },
+      "sequence": "GGAGUGCUUCAACAGUGCUUGGACGCUCC",
+      "reference": "((((((.((.(((...).)).))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_11.st",
+        "sha256": "0ac511468ad03b57ca782f7f641443da5531a267b9abd4177efec06322104d20",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "((((((.((((((...).)))))))))))",
+        "greedy": "((((((((((....).)...)).))))))",
+        "unpaired": ".............................",
+        "viennarna_mfe": "((((((.(((((......)))))))))))"
+      },
+      "viennarna_mfe_kcal_mol": -13.0
+    },
+    {
+      "id": "bpRNA_PDB_19",
+      "length": 23,
+      "methods": {
+        "nussinov": {
+          "tp": 8,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.8888888888888888,
+          "recall": 0.8888888888888888,
+          "f1": 0.8888888888888888
+        },
+        "greedy": {
+          "tp": 5,
+          "fp": 2,
+          "fn": 4,
+          "precision": 0.7142857142857143,
+          "recall": 0.5555555555555556,
+          "f1": 0.625
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 9,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 8,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.8888888888888888,
+          "f1": 0.9411764705882353
+        }
+      },
+      "sequence": "GGCGACGGUGUAAAAAUCUCGCC",
+      "reference": "(((((.((((....)))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_19.st",
+        "sha256": "84e63e12d9fc6c3eee5b47c203822a971a1cc2ef1d003230e80b0c31944f6256",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(((((.(((.(...)))))))))",
+        "greedy": "((((((...)(....)..)))))",
+        "unpaired": ".......................",
+        "viennarna_mfe": "(((((.(((......))))))))"
+      },
+      "viennarna_mfe_kcal_mol": -8.800000190734863
+    },
+    {
+      "id": "bpRNA_PDB_33",
+      "length": 24,
+      "methods": {
+        "nussinov": {
+          "tp": 6,
+          "fp": 2,
+          "fn": 4,
+          "precision": 0.75,
+          "recall": 0.6,
+          "f1": 0.6666666666666666
+        },
+        "greedy": {
+          "tp": 5,
+          "fp": 2,
+          "fn": 5,
+          "precision": 0.7142857142857143,
+          "recall": 0.5,
+          "f1": 0.5882352941176471
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 10,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 7,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1.0,
+          "recall": 0.7,
+          "f1": 0.8235294117647058
+        }
+      },
+      "sequence": "GUGCGAAGACGAAAGUCCGAGCGC",
+      "reference": "((((((((((....))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_33.st",
+        "sha256": "c0500508cd68dd8a8f7bd1694c923eb7304fd3ad06f82871fe448bd08c8e522f",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(((((..(((....)))))..)))",
+        "greedy": "((((((...(....)).)..))))",
+        "unpaired": "........................",
+        "viennarna_mfe": "((((...(((....)))...))))"
+      },
+      "viennarna_mfe_kcal_mol": -7.599999904632568
+    },
+    {
+      "id": "bpRNA_PDB_40",
+      "length": 25,
+      "methods": {
+        "nussinov": {
+          "tp": 6,
+          "fp": 4,
+          "fn": 1,
+          "precision": 0.6,
+          "recall": 0.8571428571428571,
+          "f1": 0.7058823529411765
+        },
+        "greedy": {
+          "tp": 1,
+          "fp": 6,
+          "fn": 6,
+          "precision": 0.14285714285714285,
+          "recall": 0.14285714285714285,
+          "f1": 0.14285714285714285
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 7,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 7,
+          "fp": 3,
+          "fn": 0,
+          "precision": 0.7,
+          "recall": 1.0,
+          "f1": 0.8235294117647058
+        }
+      },
+      "sequence": "GGCAGUGUGAGUACCUUCACACGUC",
+      "reference": "..(.((((((......)))))))..",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_40.st",
+        "sha256": "04aeab1988db7d79899511e009fedd4ebba44d8122b9c6f27f60dcf0ff37c7ec",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(((.(((((((...)).))))))))",
+        "greedy": "(((((((....))..)).....)))",
+        "unpaired": ".........................",
+        "viennarna_mfe": "(((.(((((((....))))))))))"
+      },
+      "viennarna_mfe_kcal_mol": -8.899999618530273
+    },
+    {
+      "id": "bpRNA_PDB_44",
+      "length": 38,
+      "methods": {
+        "nussinov": {
+          "tp": 13,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.9285714285714286,
+          "recall": 0.9285714285714286,
+          "f1": 0.9285714285714286
+        },
+        "greedy": {
+          "tp": 11,
+          "fp": 3,
+          "fn": 3,
+          "precision": 0.7857142857142857,
+          "recall": 0.7857142857142857,
+          "f1": 0.7857142857142857
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 14,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 13,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.9285714285714286,
+          "f1": 0.9629629629629629
+        }
+      },
+      "sequence": "GGAUCCCGACUGGCGAGAGCCAGGUAACGAAUGGAUCC",
+      "reference": "((((((((.((((((..))))))....))...))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_44.st",
+        "sha256": "603222495848c9617fea6cac6e48ce92f6f9ce4d18c2603b872c7ca7a13114fe",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "((((((((((((((....))))).)..))...))))))",
+        "greedy": "((((((((((((((....))).)))..))...))))))",
+        "unpaired": "......................................",
+        "viennarna_mfe": "((((((((.(((((....)))))....))...))))))"
+      },
+      "viennarna_mfe_kcal_mol": -15.5
+    },
+    {
+      "id": "bpRNA_PDB_45",
+      "length": 27,
+      "methods": {
+        "nussinov": {
+          "tp": 10,
+          "fp": 1,
+          "fn": 2,
+          "precision": 0.9090909090909091,
+          "recall": 0.8333333333333334,
+          "f1": 0.8695652173913043
+        },
+        "greedy": {
+          "tp": 5,
+          "fp": 5,
+          "fn": 7,
+          "precision": 0.5,
+          "recall": 0.4166666666666667,
+          "f1": 0.45454545454545453
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 11,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.9166666666666666,
+          "f1": 0.9565217391304348
+        }
+      },
+      "sequence": "GGAAGUCCGGUCUUCGGACCGGCUUCC",
+      "reference": "(((((.(((((((..))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_45.st",
+        "sha256": "e66af0aef1006fd505e80358e92858c1aabe3fc6da63f792752e5ca45ac7b85d",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(((((.((((((...).))))))))))",
+        "greedy": "((((((((((...)).)...)))))))",
+        "unpaired": "...........................",
+        "viennarna_mfe": "(((((.((((((....)))))))))))"
+      },
+      "viennarna_mfe_kcal_mol": -18.200000762939453
+    },
+    {
+      "id": "bpRNA_PDB_46",
+      "length": 27,
+      "methods": {
+        "nussinov": {
+          "tp": 9,
+          "fp": 2,
+          "fn": 3,
+          "precision": 0.8181818181818182,
+          "recall": 0.75,
+          "f1": 0.782608695652174
+        },
+        "greedy": {
+          "tp": 6,
+          "fp": 4,
+          "fn": 6,
+          "precision": 0.6,
+          "recall": 0.5,
+          "f1": 0.5454545454545454
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 11,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.9166666666666666,
+          "f1": 0.9565217391304348
+        }
+      },
+      "sequence": "GGAAGUUCGGUCUUCGGACCGGCUUCC",
+      "reference": "((((((.((((((..))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_46.st",
+        "sha256": "f640b8538bdecb8bf8518998a2b0ba2d99e9eae7c8a222a7e31dd4415cdab3df",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(((((.((((((...).))))))))))",
+        "greedy": "((((((((((...)).)...)))))))",
+        "unpaired": "...........................",
+        "viennarna_mfe": "((((((.(((((....)))))))))))"
+      },
+      "viennarna_mfe_kcal_mol": -15.5
+    },
+    {
+      "id": "bpRNA_PDB_82",
+      "length": 22,
+      "methods": {
+        "nussinov": {
+          "tp": 3,
+          "fp": 4,
+          "fn": 5,
+          "precision": 0.42857142857142855,
+          "recall": 0.375,
+          "f1": 0.4
+        },
+        "greedy": {
+          "tp": 3,
+          "fp": 4,
+          "fn": 5,
+          "precision": 0.42857142857142855,
+          "recall": 0.375,
+          "f1": 0.4
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 8,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 7,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.875,
+          "f1": 0.9333333333333333
+        }
+      },
+      "sequence": "GGGGCUCUUCGGAGCUCCACCA",
+      "reference": "((((((((..))))))))....",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_82.st",
+        "sha256": "83dd02ff7c2a263db442dfe6dba83ce820b1adcc1dad06a962c71b49bf0695f6",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(((((((...).))).)).)..",
+        "greedy": "(((((((....)))..)).)).",
+        "unpaired": "......................",
+        "viennarna_mfe": "(((((((....)))))))...."
+      },
+      "viennarna_mfe_kcal_mol": -12.800000190734863
+    },
+    {
+      "id": "bpRNA_PDB_84",
+      "length": 31,
+      "methods": {
+        "nussinov": {
+          "tp": 6,
+          "fp": 6,
+          "fn": 4,
+          "precision": 0.5,
+          "recall": 0.6,
+          "f1": 0.5454545454545454
+        },
+        "greedy": {
+          "tp": 6,
+          "fp": 5,
+          "fn": 4,
+          "precision": 0.5454545454545454,
+          "recall": 0.6,
+          "f1": 0.5714285714285714
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 10,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 10,
+          "fp": 2,
+          "fn": 0,
+          "precision": 0.8333333333333334,
+          "recall": 1.0,
+          "f1": 0.9090909090909091
+        }
+      },
+      "sequence": "AGUAGAAACAAGGCUUCGGCCUGCUUUUGCU",
+      "reference": "((.((((.(..(((....))).).)))).))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_84.st",
+        "sha256": "4f9d85d4589728b0407fb8650210a879f66c2f86b3021118a7cc8c3d3afd46e2",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "((((.((((.((((...).)))).)))))))",
+        "greedy": "(((((((((((...))..)..)..)))))))",
+        "unpaired": "...............................",
+        "viennarna_mfe": "(((((((.((.(((....))))).)))))))"
+      },
+      "viennarna_mfe_kcal_mol": -10.100000381469727
+    },
+    {
+      "id": "bpRNA_PDB_93",
+      "length": 22,
+      "methods": {
+        "nussinov": {
+          "tp": 0,
+          "fp": 6,
+          "fn": 8,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "greedy": {
+          "tp": 2,
+          "fp": 3,
+          "fn": 6,
+          "precision": 0.4,
+          "recall": 0.25,
+          "f1": 0.3076923076923077
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 8,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 5,
+          "precision": 1.0,
+          "recall": 0.375,
+          "f1": 0.5454545454545454
+        }
+      },
+      "sequence": "CAGACUUCGGUCGCAGAGAUGG",
+      "reference": "(.((((..)))))(((..))).",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_93.st",
+        "sha256": "a3abfd9ed477f2d3dc1e34377c7af38d41a7fa3cc4df4281b3853d1a4aa4ab32",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(..((.((.(...).))).)).",
+        "greedy": "(((((....))..).....).)",
+        "unpaired": "......................",
+        "viennarna_mfe": "..(((....))).........."
+      },
+      "viennarna_mfe_kcal_mol": -2.299999952316284
+    },
+    {
+      "id": "bpRNA_PDB_97",
+      "length": 22,
+      "methods": {
+        "nussinov": {
+          "tp": 8,
+          "fp": 1,
+          "fn": 2,
+          "precision": 0.8888888888888888,
+          "recall": 0.8,
+          "f1": 0.8421052631578947
+        },
+        "greedy": {
+          "tp": 9,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.9,
+          "f1": 0.9473684210526315
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 10,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 9,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.9,
+          "f1": 0.9473684210526315
+        }
+      },
+      "sequence": "GGCGUCAUGAGUCCAUGGCGCC",
+      "reference": "((((((((((..))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_97.st",
+        "sha256": "d49b4f928a7085ab325177ee3948fa97f940b7cdbdc2dfab4bf2b34cd073bd5b",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(((((((((...).))))))))",
+        "greedy": "(((((((((....)))))))))",
+        "unpaired": "......................",
+        "viennarna_mfe": "(((((((((....)))))))))"
+      },
+      "viennarna_mfe_kcal_mol": -14.300000190734863
+    },
+    {
+      "id": "bpRNA_PDB_105",
+      "length": 30,
+      "methods": {
+        "nussinov": {
+          "tp": 7,
+          "fp": 3,
+          "fn": 6,
+          "precision": 0.7,
+          "recall": 0.5384615384615384,
+          "f1": 0.6086956521739131
+        },
+        "greedy": {
+          "tp": 4,
+          "fp": 5,
+          "fn": 9,
+          "precision": 0.4444444444444444,
+          "recall": 0.3076923076923077,
+          "f1": 0.36363636363636365
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 13,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 9,
+          "fp": 0,
+          "fn": 4,
+          "precision": 1.0,
+          "recall": 0.6923076923076923,
+          "f1": 0.8181818181818182
+        }
+      },
+      "sequence": "GGCGCUCAAUGCUCUUCGGAGACGACCGCC",
+      "reference": "(((((((.(.(((((..)))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_105.st",
+        "sha256": "26298a02b11e54e0581aed63d6e4e2208f46103ff561db256ec41376245eb2f0",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "((((.((...((((...).)).)))).)))",
+        "greedy": "(((((((((.....))....)).)..))))",
+        "unpaired": "..............................",
+        "viennarna_mfe": "((((.((....(((....)))..)).))))"
+      },
+      "viennarna_mfe_kcal_mol": -8.699999809265137
+    },
+    {
+      "id": "bpRNA_PDB_130",
+      "length": 36,
+      "methods": {
+        "nussinov": {
+          "tp": 12,
+          "fp": 2,
+          "fn": 4,
+          "precision": 0.8571428571428571,
+          "recall": 0.75,
+          "f1": 0.8
+        },
+        "greedy": {
+          "tp": 7,
+          "fp": 5,
+          "fn": 9,
+          "precision": 0.5833333333333334,
+          "recall": 0.4375,
+          "f1": 0.5
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 16,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 14,
+          "fp": 0,
+          "fn": 2,
+          "precision": 1.0,
+          "recall": 0.875,
+          "f1": 0.9333333333333333
+        }
+      },
+      "sequence": "GGACUCGGCUUGCUGGAGACGGCAAGAGGCGAGUCC",
+      "reference": "((((((((((((((((..)))))))))..)))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_130.st",
+        "sha256": "3a281b715df7e504697badcecabc72c5e3af884fe29d55bb6016d015ed3c9831",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "((((((.(((((((.(...)))))))...)))))))",
+        "greedy": "(((((((((((.(....)).)))......)))))))",
+        "unpaired": "....................................",
+        "viennarna_mfe": "(((((((.(((((((....)))))))...)))))))"
+      },
+      "viennarna_mfe_kcal_mol": -21.399999618530273
+    },
+    {
+      "id": "bpRNA_PDB_153",
+      "length": 27,
+      "methods": {
+        "nussinov": {
+          "tp": 3,
+          "fp": 6,
+          "fn": 6,
+          "precision": 0.3333333333333333,
+          "recall": 0.3333333333333333,
+          "f1": 0.3333333333333333
+        },
+        "greedy": {
+          "tp": 6,
+          "fp": 3,
+          "fn": 3,
+          "precision": 0.6666666666666666,
+          "recall": 0.6666666666666666,
+          "f1": 0.6666666666666666
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 9,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 6,
+          "fp": 2,
+          "fn": 3,
+          "precision": 0.75,
+          "recall": 0.6666666666666666,
+          "f1": 0.7058823529411765
+        }
+      },
+      "sequence": "UGCUCCUAGUACGAGAGGACCGGAGUG",
+      "reference": ".(((((..()(((..)))...))))).",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_153.st",
+        "sha256": "e4400205abf4d5e670c5a63c46abfa886ea1a9139256cf139d6b91fe382a8151",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "((((.((...)((.(....))))))))",
+        "greedy": "(((((((..(.(....)))..))))))",
+        "unpaired": "...........................",
+        "viennarna_mfe": ".(((((..((.(....).)).)))))."
+      },
+      "viennarna_mfe_kcal_mol": -6.0
+    },
+    {
+      "id": "bpRNA_PDB_158",
+      "length": 75,
+      "methods": {
+        "nussinov": {
+          "tp": 0,
+          "fp": 28,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0
+        },
+        "greedy": {
+          "tp": 0,
+          "fp": 21,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "viennarna_mfe": {
+          "tp": 0,
+          "fp": 21,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0
+        }
+      },
+      "sequence": "GCGGAUUUAGCUCAGUUGGGAGAGCGCCAGACUGAAGAUCUGGAGGUCCUGUGUUCGAUCCACAGAAUUCGCACC",
+      "reference": "...........................................................................",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_158.st",
+        "sha256": "e9cea6e1e56931fcfd2954459fa54e29ae9688185cf54fb3660f6bce94489d3c",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(.((((((...(((((((((....).))).))))))))))((((.((.((((((...).).))))).))).))))",
+        "greedy": "((((((((((((((((((((.(....))...))...)).))....)....).)..)..).....)))))))...)",
+        "unpaired": "...........................................................................",
+        "viennarna_mfe": "(((((((..((((........)))).(((((.......))))).....(((((.......))))))))))))..."
+      },
+      "viennarna_mfe_kcal_mol": -22.399999618530273
+    },
+    {
+      "id": "bpRNA_PDB_162",
+      "length": 34,
+      "methods": {
+        "nussinov": {
+          "tp": 10,
+          "fp": 3,
+          "fn": 3,
+          "precision": 0.7692307692307693,
+          "recall": 0.7692307692307693,
+          "f1": 0.7692307692307693
+        },
+        "greedy": {
+          "tp": 7,
+          "fp": 6,
+          "fn": 6,
+          "precision": 0.5384615384615384,
+          "recall": 0.5384615384615384,
+          "f1": 0.5384615384615384
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 13,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 12,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.9230769230769231,
+          "f1": 0.96
+        }
+      },
+      "sequence": "GGAGGACAUCCCUCACGGGUGACCGUGGUCCUCC",
+      "reference": "(((((((......((((((..)))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_162.st",
+        "sha256": "65d847c93febebb8952a4d548c237bd109089722b59ca02d1946b1085ea751a2",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "((((((((....)(((.((...))))))))))))",
+        "greedy": "(((((((((((((...))).)...)).)))))))",
+        "unpaired": "..................................",
+        "viennarna_mfe": "(((((((......(((((....))))))))))))"
+      },
+      "viennarna_mfe_kcal_mol": -18.200000762939453
+    },
+    {
+      "id": "bpRNA_PDB_167",
+      "length": 49,
+      "methods": {
+        "nussinov": {
+          "tp": 7,
+          "fp": 10,
+          "fn": 11,
+          "precision": 0.4117647058823529,
+          "recall": 0.3888888888888889,
+          "f1": 0.4
+        },
+        "greedy": {
+          "tp": 5,
+          "fp": 9,
+          "fn": 13,
+          "precision": 0.35714285714285715,
+          "recall": 0.2777777777777778,
+          "f1": 0.3125
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 18,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 15,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1.0,
+          "recall": 0.8333333333333334,
+          "f1": 0.9090909090909091
+        }
+      },
+      "sequence": "GCGCUCUGAUGAGGCCGCAAGGCCGAAACUGCCGCAAGGCAGUCAGCGC",
+      "reference": "(((((....(..(((((..))))).).(((((((..))))))).)))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_167.st",
+        "sha256": "b762d275d32480654a6ccdc6d771806cb1c1eda5e7f68db56d6d184156f0d524",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(((..((((.((((((....))))(...)).)(((...)).))))))))",
+        "greedy": "(((((((((((.((...)....))...).)(...)....)))..)))))",
+        "unpaired": ".................................................",
+        "viennarna_mfe": "(((((.......((((....))))...((((((....)))))).)))))"
+      },
+      "viennarna_mfe_kcal_mol": -22.899999618530273
+    },
+    {
+      "id": "bpRNA_PDB_174",
+      "length": 101,
+      "methods": {
+        "nussinov": {
+          "tp": 28,
+          "fp": 10,
+          "fn": 12,
+          "precision": 0.7368421052631579,
+          "recall": 0.7,
+          "f1": 0.717948717948718
+        },
+        "greedy": {
+          "tp": 0,
+          "fp": 26,
+          "fn": 40,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 40,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 36,
+          "fp": 0,
+          "fn": 4,
+          "precision": 1.0,
+          "recall": 0.9,
+          "f1": 0.9473684210526315
+        }
+      },
+      "sequence": "GGCGGUACUAGUUGAGAAACUAGCUCUGUAUCUGGCGGACCCGUGGUGGAACUGUGAAGUUCGGAACACCCGGCCGCAACCCUGGGAGAGGUCCCAGGGUU",
+      "reference": "((((((.(((((((..)))))))).)))))....((((..(((.((((((((((..))))))....)))))))))))((((((((((....))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_174.st",
+        "sha256": "2f283351ccf9d79ff3e03d3b9dd69a90bc9db9bff396a0d6e8515852bfa36a16",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "..(((((((((((...)).))))(...))).)))((((..(((.(((.(((((...).))))(...)))))))))))((((((((((....))))))))))",
+        "greedy": "((((((((((((((((((((.(....))....)((.....)).)..)....)).)..))))(((.....))))..)......).......)..))...)))",
+        "unpaired": ".....................................................................................................",
+        "viennarna_mfe": ".((((..((((((....))))))..)))).....((((..(((.(((((((((....)))))....)))))))))))((((((((((....))))))))))"
+      },
+      "viennarna_mfe_kcal_mol": -49.5
+    },
+    {
+      "id": "bpRNA_PDB_190",
+      "length": 38,
+      "methods": {
+        "nussinov": {
+          "tp": 6,
+          "fp": 7,
+          "fn": 11,
+          "precision": 0.46153846153846156,
+          "recall": 0.35294117647058826,
+          "f1": 0.4
+        },
+        "greedy": {
+          "tp": 4,
+          "fp": 7,
+          "fn": 13,
+          "precision": 0.36363636363636365,
+          "recall": 0.23529411764705882,
+          "f1": 0.2857142857142857
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 17,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 13,
+          "fp": 0,
+          "fn": 4,
+          "precision": 1.0,
+          "recall": 0.7647058823529411,
+          "f1": 0.8666666666666667
+        }
+      },
+      "sequence": "GGGCUAGCACUCUGGUAUUACGGUACCUUUGUGCGCCC",
+      "reference": "((((..(((((((((((((..)))))))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_190.st",
+        "sha256": "01955b8f2b8af774ab4b0197e281871f70af2b21ad755e00082c66e40fa98a22",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "((((..((((.(..((...)))))(.(...))))))))",
+        "greedy": "((((((((((....)...)...).(...)).)).))))",
+        "unpaired": "......................................",
+        "viennarna_mfe": "((((..((((...(((((....)))))...))))))))"
+      },
+      "viennarna_mfe_kcal_mol": -16.899999618530273
+    },
+    {
+      "id": "bpRNA_PDB_269",
+      "length": 29,
+      "methods": {
+        "nussinov": {
+          "tp": 4,
+          "fp": 7,
+          "fn": 9,
+          "precision": 0.36363636363636365,
+          "recall": 0.3076923076923077,
+          "f1": 0.3333333333333333
+        },
+        "greedy": {
+          "tp": 5,
+          "fp": 5,
+          "fn": 8,
+          "precision": 0.5,
+          "recall": 0.38461538461538464,
+          "f1": 0.43478260869565216
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 13,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 9,
+          "fp": 0,
+          "fn": 4,
+          "precision": 1.0,
+          "recall": 0.6923076923076923,
+          "f1": 0.8181818181818182
+        }
+      },
+      "sequence": "GGCCAUCUUGCUCUUCGGAGGAUUUGGCC",
+      "reference": "((((((.(((((((..)))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_269.st",
+        "sha256": "b83378fd2ee3c8e138e26ce7d6178ad60df9c946c1fcb33c1115408be1ec122d",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(((((((((.(.(...)))))))..))))",
+        "greedy": "((((((((((.....)..))))..)))))",
+        "unpaired": ".............................",
+        "viennarna_mfe": "(((((...(.(((....))).)..)))))"
+      },
+      "viennarna_mfe_kcal_mol": -10.899999618530273
+    },
+    {
+      "id": "bpRNA_PDB_272",
+      "length": 22,
+      "methods": {
+        "nussinov": {
+          "tp": 7,
+          "fp": 1,
+          "fn": 3,
+          "precision": 0.875,
+          "recall": 0.7,
+          "f1": 0.7777777777777778
+        },
+        "greedy": {
+          "tp": 4,
+          "fp": 4,
+          "fn": 6,
+          "precision": 0.5,
+          "recall": 0.4,
+          "f1": 0.4444444444444444
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 10,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 8,
+          "fp": 0,
+          "fn": 2,
+          "precision": 1.0,
+          "recall": 0.8,
+          "f1": 0.8888888888888888
+        }
+      },
+      "sequence": "GGACCUCUCGAAAGAGAUGUCC",
+      "reference": "((((((((((..))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_272.st",
+        "sha256": "261247a79f99cf9adda91a476cebeb134e5590180ccbb929d91c0cad6737db52",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(((.(((((....)))).))))",
+        "greedy": "((((((((....))))..))))",
+        "unpaired": "......................",
+        "viennarna_mfe": "((((.((((....)))).))))"
+      },
+      "viennarna_mfe_kcal_mol": -10.300000190734863
+    },
+    {
+      "id": "bpRNA_PDB_276",
+      "length": 24,
+      "methods": {
+        "nussinov": {
+          "tp": 0,
+          "fp": 8,
+          "fn": 11,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "greedy": {
+          "tp": 3,
+          "fp": 4,
+          "fn": 8,
+          "precision": 0.42857142857142855,
+          "recall": 0.2727272727272727,
+          "f1": 0.3333333333333333
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 11,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 8,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1.0,
+          "recall": 0.7272727272727273,
+          "f1": 0.8421052631578947
+        }
+      },
+      "sequence": "GGGAAGGCGCUUCGGCGUCGGCCC",
+      "reference": "(((((((((((..)))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_276.st",
+        "sha256": "73a00ca9e7adf992d78e7e1b2d95911697c9de538698ddb890d387ba4e239b7d",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": ".(((((...))))(((...).)))",
+        "greedy": "((((((....))(...))...)))",
+        "unpaired": "........................",
+        "viennarna_mfe": "(((..(((((....)))))..)))"
+      },
+      "viennarna_mfe_kcal_mol": -13.199999809265137
+    },
+    {
+      "id": "bpRNA_PDB_311",
+      "length": 34,
+      "methods": {
+        "nussinov": {
+          "tp": 13,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "greedy": {
+          "tp": 12,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.9230769230769231,
+          "recall": 0.9230769230769231,
+          "f1": 0.9230769230769231
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 13,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 12,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.9230769230769231,
+          "f1": 0.96
+        }
+      },
+      "sequence": "GGAGGUAGUAGGUCGAAAGACCGUUCUACACUCC",
+      "reference": "((((((((.(((((....)))).).)))).))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_311.st",
+        "sha256": "46f83f2328244a952bbdcba2763c53b3462750d038811c03f4fe784ac8140fd5",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "((((((((.(((((....)))).).)))).))))",
+        "greedy": "(((((((((.((((....)))))..)))).))))",
+        "unpaired": "..................................",
+        "viennarna_mfe": "((((((((..((((....))))...)))).))))"
+      },
+      "viennarna_mfe_kcal_mol": -16.299999237060547
+    },
+    {
+      "id": "bpRNA_PDB_319",
+      "length": 38,
+      "methods": {
+        "nussinov": {
+          "tp": 5,
+          "fp": 8,
+          "fn": 11,
+          "precision": 0.38461538461538464,
+          "recall": 0.3125,
+          "f1": 0.3448275862068966
+        },
+        "greedy": {
+          "tp": 5,
+          "fp": 6,
+          "fn": 11,
+          "precision": 0.45454545454545453,
+          "recall": 0.3125,
+          "f1": 0.37037037037037035
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 16,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 0,
+          "fp": 11,
+          "fn": 16,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "sequence": "GGAGGAACUACUGUCUUCCUUCGGGUCGUGCAGCCUCC",
+      "reference": "((((((..).((((((((((..)))))).)))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_319.st",
+        "sha256": "9f7961dd84dc2d3ee572e401815489b1eb2113bf3381340fe50e09ce0f61b679",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(((((..((((.(.(..((...))).)))..)))))))",
+        "greedy": "((((((((((..(......))..)))..)....)))))",
+        "unpaired": "......................................",
+        "viennarna_mfe": "(((((((........)))))))((((......)))).."
+      },
+      "viennarna_mfe_kcal_mol": -10.699999809265137
+    },
+    {
+      "id": "bpRNA_PDB_382",
+      "length": 68,
+      "methods": {
+        "nussinov": {
+          "tp": 18,
+          "fp": 9,
+          "fn": 11,
+          "precision": 0.6666666666666666,
+          "recall": 0.6206896551724138,
+          "f1": 0.6428571428571429
+        },
+        "greedy": {
+          "tp": 5,
+          "fp": 17,
+          "fn": 24,
+          "precision": 0.22727272727272727,
+          "recall": 0.1724137931034483,
+          "f1": 0.19607843137254902
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 29,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 25,
+          "fp": 2,
+          "fn": 4,
+          "precision": 0.9259259259259259,
+          "recall": 0.8620689655172413,
+          "f1": 0.8928571428571429
+        }
+      },
+      "sequence": "GGGCGAGGGUCUCCUCUGAGUGAUUGACUACCCGUCAGCGGGGGUCUUUCAUUUGGGGGCUCGUGCCC",
+      "reference": "(((((.((((((((..(..((((((((((.(((((..)))))))))))))))).)))))))).)))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_382.st",
+        "sha256": "fa68c580d038a2734e2239aa203d840e6ce2a13e5e3c2921573d4eb2c93410e2",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "((((.((((.(.((.((((((((..((((.((((....)))))))))..))))))))))))).)))))",
+        "greedy": "((((((((((((((((((((((......))..).)))).)))))......).)).....))..)))))",
+        "unpaired": "....................................................................",
+        "viennarna_mfe": "(((((.((((((((...((((((..((((.((((....))))))))..)))))))))))))).)))))"
+      },
+      "viennarna_mfe_kcal_mol": -39.0
+    },
+    {
+      "id": "bpRNA_PDB_389",
+      "length": 26,
+      "methods": {
+        "nussinov": {
+          "tp": 5,
+          "fp": 3,
+          "fn": 3,
+          "precision": 0.625,
+          "recall": 0.625,
+          "f1": 0.625
+        },
+        "greedy": {
+          "tp": 5,
+          "fp": 3,
+          "fn": 3,
+          "precision": 0.625,
+          "recall": 0.625,
+          "f1": 0.625
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 8,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 4,
+          "fp": 0,
+          "fn": 4,
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        }
+      },
+      "sequence": "GCUGAGCUCGAAAGAGCAAUGAUGUC",
+      "reference": ".((((((((....))))...))))..",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_389.st",
+        "sha256": "1aa7ae4c6139493887dac38c15dac5625362b0a06fb2b74b56011d7d4116df7b",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(((.(((((....))))..).).).)",
+        "greedy": "((((.((((....))))..).).).)",
+        "unpaired": "..........................",
+        "viennarna_mfe": ".....((((....))))........."
+      },
+      "viennarna_mfe_kcal_mol": -6.099999904632568
+    },
+    {
+      "id": "bpRNA_PDB_398",
+      "length": 68,
+      "methods": {
+        "nussinov": {
+          "tp": 21,
+          "fp": 7,
+          "fn": 6,
+          "precision": 0.75,
+          "recall": 0.7777777777777778,
+          "f1": 0.7636363636363637
+        },
+        "greedy": {
+          "tp": 14,
+          "fp": 9,
+          "fn": 13,
+          "precision": 0.6086956521739131,
+          "recall": 0.5185185185185185,
+          "f1": 0.56
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 27,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 23,
+          "fp": 5,
+          "fn": 4,
+          "precision": 0.8214285714285714,
+          "recall": 0.8518518518518519,
+          "f1": 0.8363636363636363
+        }
+      },
+      "sequence": "GGAAUUUAUGAGUACGUAGAGUAUAAUUAGUCUUCGGACUUCCUUAUACUUAUAUACUUAUAGAUUCC",
+      "reference": "(((((((((((((((....((((((..((((((..))))))...))))).).).))))))))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_398.st",
+        "sha256": "0401ce9f68e9a5f737a929f8926a19241a01682d11d653d6f7c88d4f64e65dbf",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "((((((((((((((..((((((((((..((((...).))))..).)))))).))))))))))))))))",
+        "greedy": "((((((((((((((((((((...)..)).)....).)(.((......)...)).))))))))))))))",
+        "unpaired": "....................................................................",
+        "viennarna_mfe": "((((((((((((((.((.((((((((..((((....))))...)))))))))).))))))))))))))"
+      },
+      "viennarna_mfe_kcal_mol": -26.100000381469727
+    },
+    {
+      "id": "bpRNA_PDB_445",
+      "length": 76,
+      "methods": {
+        "nussinov": {
+          "tp": 11,
+          "fp": 18,
+          "fn": 12,
+          "precision": 0.3793103448275862,
+          "recall": 0.4782608695652174,
+          "f1": 0.4230769230769231
+        },
+        "greedy": {
+          "tp": 6,
+          "fp": 17,
+          "fn": 17,
+          "precision": 0.2608695652173913,
+          "recall": 0.2608695652173913,
+          "f1": 0.2608695652173913
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 23,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 21,
+          "fp": 2,
+          "fn": 2,
+          "precision": 0.9130434782608695,
+          "recall": 0.9130434782608695,
+          "f1": 0.9130434782608695
+        }
+      },
+      "sequence": "GCCCGGAUAGCUCAGUCGGUAGAGCAGGGGAUUGAAAAUCCCCGUGUCCUUGGUUCGAUUCCGAGUCCGGGCACCA",
+      "reference": "(((((((..((((........))))((((((.......))))))....((((((...)..))))))))))))....",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_445.st",
+        "sha256": "9eb755b488e59d65b8abc38c2b2e8594e8f3358e8bc37a36b42001c32da80c87",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "((((((..(.(((((((((.(((.(((((((((...))))))).))))(...))))))))..))))))))))....",
+        "greedy": "((((((((((((((((((((((..(....).))....)...))).)...))))...).))....)))))))...).",
+        "unpaired": "............................................................................",
+        "viennarna_mfe": "(((((((..((((........)))).(((((((...))))))).....(((((.......))))))))))))...."
+      },
+      "viennarna_mfe_kcal_mol": -34.099998474121094
+    },
+    {
+      "id": "bpRNA_PDB_667",
+      "length": 31,
+      "methods": {
+        "nussinov": {
+          "tp": 9,
+          "fp": 4,
+          "fn": 1,
+          "precision": 0.6923076923076923,
+          "recall": 0.9,
+          "f1": 0.782608695652174
+        },
+        "greedy": {
+          "tp": 7,
+          "fp": 3,
+          "fn": 3,
+          "precision": 0.7,
+          "recall": 0.7,
+          "f1": 0.7
+        },
+        "unpaired": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 10,
+          "precision": null,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "viennarna_mfe": {
+          "tp": 9,
+          "fp": 4,
+          "fn": 1,
+          "precision": 0.6923076923076923,
+          "recall": 0.9,
+          "f1": 0.782608695652174
+        }
+      },
+      "sequence": "GGUGUUGACUGUUGAAUCUCAUGGCAACACC",
+      "reference": "(((((((.((...(.)......)))))))))",
+      "provenance": {
+        "archive_member": "stFiles/bpRNA_PDB_667.st",
+        "sha256": "3f745148b70cde89af53c98efd3463efa7dd82b3457230f0d5ffbfd651509a39",
+        "origin": "PDB-derived secondary annotation in bpRNA-1m v1.0"
+      },
+      "predictions": {
+        "nussinov": "(((((((.(((.(((...)))))))))))))",
+        "greedy": "(((((((((....)(...)..)..)))))))",
+        "unpaired": "...............................",
+        "viennarna_mfe": "(((((((.((((.((...)))))))))))))"
+      },
+      "viennarna_mfe_kcal_mol": -10.399999618530273
+    }
+  ],
+  "micro_average": {
+    "nussinov": {
+      "tp": 259,
+      "fp": 164,
+      "fn": 152,
+      "precision": 0.6122931442080378,
+      "recall": 0.6301703163017032,
+      "f1": 0.6211031175059952
+    },
+    "greedy": {
+      "tp": 169,
+      "fp": 190,
+      "fn": 242,
+      "precision": 0.47075208913649025,
+      "recall": 0.41119221411192214,
+      "f1": 0.43896103896103894
+    },
+    "unpaired": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 411,
+      "precision": null,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "viennarna_mfe": {
+      "tp": 334,
+      "fp": 53,
+      "fn": 77,
+      "precision": 0.8630490956072352,
+      "recall": 0.8126520681265207,
+      "f1": 0.8370927318295739
+    }
+  },
+  "metric_policy": "Exact base pairs; undefined ratios are null; no pseudoknots."
+}
