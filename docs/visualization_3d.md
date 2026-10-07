@@ -1,6 +1,15 @@
 # Visualisation 3D (VTK standalone)
 
-Ce module fournit une visualisation de laboratoire pour inspecter les projections 3D contraintes utilisees par DeepStructGenomics. Il s'agit d'une representation fonctionnelle derivee de la structure secondaire ARN validee : l'objectif est de raisonner sur les voisinages, l'accessibilite et les variations relatives WT/mutant, pas de decrire une conformation atomiquement exacte.
+Ce module affiche les PDB/mmCIF et les scores du pipeline. Les PDB générés
+utilisent une hélice paramétrique dépendant seulement de la longueur de la
+séquence, sans repliement moléculaire prédit. Des séquences de même longueur
+ont les mêmes coordonnées ; les distances affichées ne mesurent donc pas un
+déplacement biologique. Les scores et les connecteurs proviennent des
+appariements secondaires prédits par l'heuristique.
+
+Pour une comparaison lisible des appariements, privilégier
+`scripts/view_secondary.py --manifest chemin/visualization_manifest.json`
+après régénération des résultats sur `main` ; voir le [guide de démo](demo.md).
 
 ## Installation
 
@@ -83,7 +92,7 @@ outputs/
       visualization_manifest.json
 ```
 
-- `wt_structure.pdb` et `mutant_structure.pdb` sont des projections helicoidales contraintes (1 atome/glyphe par nucleotide).
+- `wt_structure.pdb` et `mutant_structure.pdb` sont des projections hélicoïdales illustratives (1 atome/glyphe par nucléotide), déterminées par la longueur.
 - `wt_scores.json` et `mutant_scores.json` encodent les scores derives de la structure secondaire (cles `position_scores` et/ou `residue_scores`). Ils sont utilises pour le mode overlay (`mutant_scores.json`) et pour le delta (les deux fichiers).
 - `visualization_manifest.json` fournit la tracabilite : identifiant NCBI, source, date, parametres du modele, fichiers produits, statistiques (`score_statistics_*`, `displacement_statistics`, etc.) ainsi que le mode d'etirement applique (note : la LUT etend le contraste visuel mais ne modifie pas les donnees). Le manifest reference maintenant explicitement `impact_summary_file`, ce qui permet aux outils en aval de retrouver facilement le resume d'impact.
 - `impact_summary.json` contient un resume WT->MUT nullement lie a VTK : statistiques globales (min/max/moyenne/medianes des deltas, ratios positifs/negatifs), "hotspots" (top positions triees par `|delta|` au-dessus d'un seuil configurable) et, si les paires de bases sont connues, un comptage des connecteurs touches (`max(|delta(i)|, |delta(j)|) >= seuil`). Lorsque la sequence mutante n'est pas fournie, ce fichier existe quand meme avec des zeros et une note explicite (`"mutant not provided"`). Ce fichier est concu pour etre digeste rapidement dans des notebooks / scripts d'analyse.
@@ -115,7 +124,7 @@ connecteurs de paires et rapports.
 ## Limites scientifiques & hierarchie de confiance
 
 - **Structure secondaire = socle (niveau eleve)** : les scores sont calcules a partir des appariements dot-bracket valides. Toute interpretation doit partir de ce niveau.
-- **Projection 3D contrainte (niveau intermediaire)** : la geometrie est generee par une helice parametrique pour visualiser des voisinages et contraintes spatiales. Ce n'est **pas** une structure atomique physique.
+- **Projection 3D illustrative** : l'hélice paramétrique ne dépend pas des appariements et ne permet pas de déduire voisinage moléculaire, accessibilité ou contraintes spatiales physiques.
 - **Details tertiaires (niveau exploratoire)** : couleurs / glyphes servent a comparer WT vs mutant. Les conclusions doivent rester comparatives (delta = variation relative) plutot qu'absolues.
 
 Les metadonnees fournies (identifiant NCBI, parametres de generation, datation UTC) permettent de retracer les hypotheses et de reproduire la visualisation. Toute utilisation biomedicale doit tenir compte du contexte cellulaire, des partenaires moleculaires et des incertitudes sur l'environnement.
@@ -163,7 +172,12 @@ python scripts/view_3d.py --mode overlay `
 
 ## Paires de bases (secondary structure)
 
-Les connecteurs de paires de bases visualisent les appariements issus de la structure secondaire (indice 1-based), ils ne representent PAS des liaisons chimiques 3D physiques. Par defaut aucun connecteur n'est rendu ; fournir au moins un JSON `--base-pairs-wt` et/ou `--base-pairs-mut` pour activer la feature (et `--no-base-pairs` pour la couper explicitement). Le format attendu est minimal :
+Les connecteurs de paires de bases visualisent les appariements secondaires
+(indices depuis 1), pas des liaisons chimiques 3D. Le pipeline exporte désormais
+`wt_base_pairs.json` et `mut_base_pairs.json`, détectés automatiquement avec
+`--manifest`. Avec les anciens résultats ou sans manifeste, fournir ces fichiers
+via `--base-pairs-wt` et `--base-pairs-mut`. `--no-base-pairs` masque les connecteurs.
+Le format attendu est minimal :
 
 ```json
 {

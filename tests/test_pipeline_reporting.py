@@ -18,7 +18,7 @@ from deepstructgenomics.visualization.score_mapping import (
     load_score_table,
     map_scores_to_atoms,
 )
-from deepstructgenomics.visualization.tk_vtk_overlay import OverlayDeltaViewer, OverlayViewer
+from deepstructgenomics.visualization.tk_vtk_overlay import BasePairOptions, OverlayDeltaViewer, OverlayViewer
 
 
 REFERENCE = "GAAAAC"
@@ -41,6 +41,24 @@ def pipeline(tmp_path, monkeypatch):
 
 def read_json(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def test_pair_legend_matches_rendered_and_hidden_pairs(pipeline):
+    result = pipeline.run_and_export(PipelineInput(sequence=REFERENCE, mutant_sequence=MUTANT))
+    paths = result.visualization_paths
+    viewer = OverlayDeltaViewer(paths.wt_structure, paths.mutant_structure,
+                                paths.wt_score_file, paths.mutant_score_file,
+                                base_pair_config=BasePairOptions(enabled=True, wt_pairs=((1, 6),)))
+    viewer._build_scene(vtkRenderer())
+    assert "BasePairs: on | WT=1 MUT=0" in viewer._status_actor.GetInput()
+    for actor in viewer._base_pair_actors:
+        actor.SetVisibility(0)
+    viewer._refresh_base_pair_status()
+    assert "BasePairs: off | WT=1 MUT=0" in viewer._status_actor.GetInput()
+    assert viewer._scalar_bar_actor.GetUnconstrainedFontSize()
+    lut = viewer._lut_diverging()
+    neutral = lut.GetTableValue(lut.GetNumberOfTableValues() // 2)[:3]
+    assert min(neutral) > 0.8 and max(neutral) - min(neutral) < 0.1
 
 
 def test_run_computes_summary_before_export(pipeline):

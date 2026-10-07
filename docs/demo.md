@@ -27,6 +27,17 @@ Relancer dans le même dossier remplace les sorties de cette démo.
 
 ## Résultats attendus
 
+Pour les inspecter dans une figure interactive, après régénération avec le code
+actuel de `main` :
+
+```bash
+python scripts/view_secondary.py --manifest outputs_demo/offline_demo/visualization/visualization_manifest.json
+```
+
+La figure utilise les paires exportées dans `secondary_structures.json` et les
+scores calculés, sans inventer une conformation 3D. Ajouter
+`--export outputs_demo/comparison_secondary.png --export-only` pour un PNG sans fenêtre.
+
 Avec les paramètres par défaut :
 
 ```text
@@ -68,6 +79,9 @@ outputs_demo/
       wt_scores.json
       mutant_scores.json
       visualization_manifest.json
+      secondary_structures.json
+      wt_base_pairs.json
+      mut_base_pairs.json
 ```
 
 Ouvrir `offline_demo.md` pour lire le tableau des positions les plus modifiées.
@@ -93,4 +107,4 @@ Cette commande recalcule les résultats avec le pipeline et génère
 `docs/assets/demo_delta.png` avec Matplotlib, sans ouvrir de fenêtre.
 Les arcs représentent les paires prédites ; les barres montrent les deltas de
 score calculés. L'option `--output "chemin/figure.png"` permet de choisir le
-fichier de destination. Matplotlib est fourni avec les dépendances du viewer VTK.
+fichier de destination. Matplotlib est déclaré parmi les dépendances du projet.

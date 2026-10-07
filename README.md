@@ -7,12 +7,12 @@
 
 DeepStructGenomics-NCBI est un cadre de recherche et d'ingénierie logicielle dédié à l'étude structurale de l'ARN et de la régulation génomique à partir des données publiques du NCBI. L'objectif est de relier systématiquement séquences biologiques, structures (ARN et architecture 3D) et impact fonctionnel potentiel, afin de proposer des analyses mécanistiques exploitables en recherche biomédicale.
 
-**Projet en développement actif — README mis à jour le 6 octobre 2026.**
+**Projet en développement actif — README mis à jour le 7 octobre 2026.**
 La dernière version publiée est **v0.3.0**. Les notes et les exemples téléchargeables
 sont regroupés dans la [release v0.3.0](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.3.0).
 Cette version ajoute l'ouverture par manifeste, les exports CSV et le réglage
 des seuils de comparaison.
-La validation locale du 6 octobre 2026 compte **147 tests réussis** sous
+La validation locale du 7 octobre 2026 compte **156 tests réussis** sous
 Windows / Python 3.11.
 Le [workflow de tests](.github/workflows/tests.yml) est configuré pour
 Linux / Python 3.10 et Windows / Python 3.12 ; le badge ci-dessus suit les
@@ -23,6 +23,14 @@ exécutions sur GitHub.
 [Roadmap](#roadmap) · [Contribuer](#suivi-et-contributions)
 
 ## Features par version
+
+### Après v0.3.0 — changements non publiés
+
+- Vue comparative des appariements via `scripts/view_secondary.py --manifest` :
+  référence et mutant, bases numérotées, paires perdues/gagnées et deltas de score.
+- Export des structures secondaires et des paires pour les deux visualiseurs.
+- Légende VTK compacte, couleur neutre claire pour les deltas nuls et description
+  explicite de la géométrie illustrative.
 
 ### v0.3.0 — publiée le 6 octobre 2026
 
@@ -205,7 +213,11 @@ outputs/
       visualization_manifest.json
 ```
 
-Les structures 3D générées sont des projections contraintes (une sphère par nucléotide) destinées à comparer des états WT/mutant. Elles ne représentent pas une conformation atomique unique. Les scores sont dérivés des appariements (structure secondaire) et servent à visualiser des gradients relatifs.
+Les PDB générés placent une sphère par nucléotide sur une hélice paramétrique
+dépendant seulement de la longueur : deux séquences de même longueur ont les
+mêmes coordonnées. Les scores et les connecteurs dépendent des appariements,
+mais cette géométrie ne prédit ni repliement moléculaire ni déplacement physique.
+Pour comparer les appariements, utiliser la vue secondaire ci-dessous.
 
 ## Installation rapide
 
@@ -314,7 +326,32 @@ silencieusement par suppression de caractères invalides sont désormais
 refusées. Corriger la séquence source avant de relancer l'analyse afin de
 conserver une correspondance fiable entre positions et résultats.
 
-## Visualisation 3D contrainte
+## Comparaison des appariements ARN
+
+Depuis `main`, régénérer les résultats pour inclure `secondary_structures.json`,
+puis ouvrir une figure interactive :
+
+```bash
+python scripts/run_demo.py
+python scripts/view_secondary.py --manifest outputs_demo/offline_demo/visualization/visualization_manifest.json
+```
+
+![Comparaison des appariements prédits et des scores](docs/assets/secondary_comparison.png)
+
+La démo montre la substitution C12A, la paire 1–12 perdue (pointillés orange),
+les trois paires conservées et les deux deltas aux positions 1 et 12.
+Les arcs représentent exactement les paires prédites exportées ; leur forme
+est schématique. La figure affiche toutes les positions communes, indépendamment
+du filtre des hotspots. Zoom et déplacement sont disponibles dans la barre
+d'outils de la fenêtre.
+
+Pour enregistrer sans ouvrir de fenêtre :
+
+```bash
+python scripts/view_secondary.py --manifest outputs_demo/offline_demo/visualization/visualization_manifest.json --export outputs_demo/comparison_secondary.png --export-only
+```
+
+## Visualisation 3D illustrative
 
 Le viewer desktop est accessible via :
 

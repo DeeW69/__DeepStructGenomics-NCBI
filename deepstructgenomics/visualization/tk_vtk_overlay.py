@@ -240,6 +240,8 @@ class OverlayBase:
                 self._toggle_actor(self._links_actor, render_window)
             elif key == "p":
                 self._toggle_actor_list(self._base_pair_actors, render_window)
+                self._refresh_base_pair_status()
+                render_window.Render()
 
         interactor.AddObserver("KeyPressEvent", on_key_press)
 
@@ -290,7 +292,7 @@ class OverlayBase:
         if not config or not getattr(config, "enabled", False):
             return ""
         summary = self._base_pair_summary or {}
-        state = "on" if self._base_pair_actors else "off"
+        state = "on" if any(actor.GetVisibility() for actor in self._base_pair_actors if actor) else "off"
         wt_count = int(summary.get("wt", 0))
         mut_count = int(summary.get("mut", 0))
         mode_label = str(summary.get("mode", config.mode or "lines"))
@@ -299,6 +301,16 @@ class OverlayBase:
             f"BasePairs: {state} | WT={wt_count} MUT={mut_count} | "
             f"mode={mode_label} | threshold={threshold:.2f} | toggle=P"
         )
+
+    def _refresh_base_pair_status(self) -> None:
+        if self._status_actor is None:
+            return
+        lines = self._status_actor.GetInput().splitlines()
+        line = self._base_pair_status_line()
+        lines = [line if text.startswith("BasePairs:") else text for text in lines]
+        if line and not any(text.startswith("BasePairs:") for text in lines):
+            lines.append(line)
+        self._status_actor.SetInput("\n".join(lines))
 
     def _build_links_actor(
         self,
@@ -543,6 +555,7 @@ class OverlayBase:
         render_dataset(wt_structure, list(config.wt_pairs or ()), "wt")
         render_dataset(mut_structure, list(config.mut_pairs or ()), "mut")
         self._base_pair_summary = summary
+        self._refresh_base_pair_status()
 
     @staticmethod
     def _paths_from_segments(
@@ -747,19 +760,14 @@ class OverlayBase:
     @staticmethod
     def _lut_diverging() -> vtkLookupTable:
         lut = vtkLookupTable()
-        lut.SetNumberOfTableValues(256)
+        lut.SetNumberOfTableValues(257)
         lut.SetRange(-1.0, 1.0)
         lut.Build()
-        for i in range(256):
-            t = (i / 255.0) * 2.0 - 1.0
-            if t >= 0:
-                r = min(1.0, 0.35 + 0.65 * t)
-                g = 0.2 * (1.0 - t)
-                b = 0.2 * (1.0 - t)
-            else:
-                r = 0.2 * (1.0 + t)
-                g = 0.35 * (1.0 + t)
-                b = min(1.0, 0.5 - t * 0.5)
+        for i in range(257):
+            t = (i / 256.0) * 2.0 - 1.0
+            neutral = np.array([0.88, 0.90, 0.93])
+            endpoint = np.array([0.90, 0.27, 0.13] if t >= 0 else [0.16, 0.55, 0.94])
+            r, g, b = neutral * (1.0 - abs(t)) + endpoint * abs(t)
             lut.SetTableValue(i, r, g, b, 1.0)
         return lut
 
@@ -874,15 +882,23 @@ class OverlayBase:
         bar.SetLookupTable(lut)
         bar.SetTitle(scalar_title)
         bar.SetNumberOfLabels(5)
-        bar.SetWidth(0.12)
-        bar.SetHeight(0.45)
-        bar.SetPosition(0.85, 0.10)
+        bar.SetWidth(0.10)
+        bar.SetHeight(0.32)
+        bar.SetPosition(0.88, 0.18)
+        bar.SetMaximumWidthInPixels(110)
+        bar.SetUnconstrainedFontSize(True)
+        bar.SetLabelFormat("%.2f")
         title_prop = bar.GetTitleTextProperty()
         title_prop.SetFontSize(16)
         title_prop.SetColor(0.95, 0.95, 0.95)
+        title_prop.ItalicOff()
+        title_prop.ShadowOff()
         label_prop = bar.GetLabelTextProperty()
         label_prop.SetFontSize(14)
         label_prop.SetColor(0.9, 0.9, 0.9)
+        label_prop.ItalicOff()
+        label_prop.BoldOff()
+        label_prop.ShadowOff()
         renderer.AddViewProp(bar)
         self._scalar_bar_actor = bar
 
@@ -1150,7 +1166,7 @@ class OverlayDeltaViewer(OverlayBase):
             scalar_range=scalar_range,
             clamp_range=(-1.0, 1.0),
             legend_line="WT=gray transparent | MUT=colored delta (mut-wt)",
-            extra_lines=self._delta_status_lines(),
+            extra_lines=("Schema geometrique illustratif - pas une conformation moleculaire", *self._delta_status_lines()),
         )
         self._apply_overlay_annotations(renderer, lut=lut, scalar_title="delta", status_text=status_text)
 

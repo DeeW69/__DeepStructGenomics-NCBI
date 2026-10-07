@@ -58,6 +58,14 @@ les positions comparées dans les variants de celles utilisées pour les deltas.
 
 ## 3. Détail étape par étape
 
+Les nouveaux exports sur `main` ajoutent `secondary_structures.json` : les
+objets `reference` et `mutant` contiennent `sequence`, `dot_bracket`, `base_pairs`
+(indices depuis **0**) et `scores` (liste alignée sur la séquence, accès Python
+depuis **0**). `mutant` vaut `null` sans comparaison. Le viewer secondaire ajoute
+1 aux indices pour l'affichage. Les fichiers séparés `wt_base_pairs.json` et
+`mut_base_pairs.json` contiennent déjà les paires depuis **1** pour VTK ; ne pas
+leur ajouter 1 une seconde fois.
+
 ### 3.1. Entrées et validation des séquences
 
 Lors de l'ingestion d'une séquence (accès NCBI, fichier FASTA `--fasta`, ou chaîne CLI `--sequence`) :

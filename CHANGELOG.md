@@ -1,5 +1,19 @@
 # Historique des versions
 
+## Non publié
+
+- Vue interactive et export PNG des appariements secondaires via
+  `scripts/view_secondary.py --manifest`, à partir des prédictions exportées :
+  référence/mutant côte à côte, paires perdues/gagnées, bases différentes et deltas.
+- Nouvel artefact `secondary_structures.json` et exports de paires depuis 1,
+  détectés automatiquement par le viewer VTK. Régénérer les anciens résultats
+  pour utiliser la nouvelle vue secondaire.
+- Correction de la légende VTK surdimensionnée, palette à zéro neutre clair et
+  état des connecteurs synchronisé avec leur affichage.
+- Documentation corrigée : la géométrie pseudo-3D dépend seulement de la
+  longueur, elle ne prédit pas une conformation moléculaire.
+- Dépendance directe Matplotlib déclarée, sans mise à jour des versions verrouillées.
+
 ## 0.3.0 — 6 octobre 2026
 
 [Release GitHub et artefacts](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.3.0)

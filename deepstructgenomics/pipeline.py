@@ -106,6 +106,7 @@ class VisualizationArtifactPaths:
     manifest_path: Optional[Path]
     impact_summary_file: Optional[Path] = None
     hotspots_csv_file: Optional[Path] = None
+    secondary_structure_file: Optional[Path] = None
 
     @property
     def score_file(self) -> Optional[Path]:  # backward-compatible alias
@@ -314,6 +315,30 @@ class DeepStructPipeline:
             mutant_sequence=result.mutant_sequence,
         )
 
+        def structure_payload(structure):
+            if structure is None:
+                return None
+            scores = derive_position_scores_from_structure(structure)
+            return {
+                "sequence": structure.sequence,
+                "dot_bracket": structure.dot_bracket,
+                "base_pairs": structure.base_pairs,
+                "scores": [scores[pos] for pos in range(1, len(structure.sequence) + 1)],
+            }
+
+        secondary_path = viz_dir / "secondary_structures.json"
+        secondary_path.write_text(json.dumps({
+            "version": 1,
+            "identifier": result.sequence_record.identifier,
+            "reference": structure_payload(result.structure),
+            "mutant": structure_payload(result.mutant_structure),
+        }, indent=2, ensure_ascii=False), encoding="utf-8")
+        for filename, structure in (("wt_base_pairs.json", result.structure),
+                                    ("mut_base_pairs.json", result.mutant_structure)):
+            (viz_dir / filename).write_text(json.dumps({
+                "base_pairs": [[i + 1, j + 1] for i, j in structure.base_pairs] if structure else [],
+            }, indent=2), encoding="utf-8")
+
         manifest_path = write_visualization_manifest(
             viz_dir / "visualization_manifest.json",
             identifier=result.sequence_record.identifier,
@@ -321,7 +346,7 @@ class DeepStructPipeline:
             parameters={
                 "generated_at": result.generated_at.replace(tzinfo=None).isoformat() + "Z",
                 "score_context": "reference",
-                "note": "Projection 3D contrainte derivee de la structure secondaire.",
+                "note": "Geometrie illustrative dependante de la longueur, sans prediction de conformation 3D. Les appariements sont exportes separement.",
                 "score_statistics_wt": wt_stats,
                 "score_statistics_mutant": mutant_stats,
                 "score_statistics_delta": delta_stats,
@@ -334,6 +359,7 @@ class DeepStructPipeline:
             mutant_score_file=mutant_score_path,
             impact_summary_file=impact_summary_path,
             hotspots_csv_file=hotspots_csv_path,
+            secondary_structure_file=secondary_path,
         )
 
         return VisualizationArtifactPaths(
@@ -345,4 +371,5 @@ class DeepStructPipeline:
             manifest_path=manifest_path,
             impact_summary_file=impact_summary_path,
             hotspots_csv_file=hotspots_csv_path,
+            secondary_structure_file=secondary_path,
         )

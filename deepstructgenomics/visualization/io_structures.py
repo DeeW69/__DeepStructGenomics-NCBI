@@ -184,6 +184,7 @@ def write_visualization_manifest(
     mutant_score_file: Optional[Path],
     impact_summary_file: Optional[Path] = None,
     hotspots_csv_file: Optional[Path] = None,
+    secondary_structure_file: Optional[Path] = None,
 ) -> Path:
     """Write the manifest describing visualization artifacts."""
 
@@ -196,6 +197,7 @@ def write_visualization_manifest(
         "mutant_score_file": str(mutant_score_file) if mutant_score_file else None,
         "impact_summary_file": str(impact_summary_file) if impact_summary_file else None,
         "hotspots_csv_file": str(hotspots_csv_file) if hotspots_csv_file else None,
+        "secondary_structure_file": str(secondary_structure_file) if secondary_structure_file else None,
         "parameters": parameters,
     }
     manifest_path = Path(path)
@@ -257,6 +259,7 @@ def resolve_manifest_bundle(manifest_path: str | Path) -> Dict[str, Any]:
         "mutant_score_file": _resolve("mutant_score_file"),
         "impact_summary_file": _resolve("impact_summary_file"),
         "hotspots_csv_file": _resolve("hotspots_csv_file"),
+        "secondary_structure_file": _resolve("secondary_structure_file"),
         "parameters": payload.get("parameters", {}),
     }
 
