@@ -168,6 +168,38 @@ class OverlayBase:
     def _build_scene(self, renderer: vtkRenderer) -> None:  # pragma: no cover - abstract
         raise NotImplementedError
 
+    def attach_scene(self, renderer: vtkRenderer) -> str:
+        """Build the existing scene for an embedded host without starting a loop."""
+        self._build_scene(renderer)
+        details = self._status_actor.GetInput() if self._status_actor else ""
+        for actor in self._ui_actors():
+            actor.SetVisibility(False)
+        return details
+
+    def set_layer_visible(self, layer: str, visible: bool) -> None:
+        actors = {"wt": [self._wt_actor], "mutant": [self._mut_actor],
+                  "backbone": [self._backbone_actor], "links": [self._links_actor],
+                  "pairs": self._base_pair_actors}[layer]
+        for actor in actors:
+            if actor is not None:
+                actor.SetVisibility(visible)
+
+    @property
+    def pick_actor(self):
+        return self._interaction_actor
+
+    def position_near(self, point) -> Optional[int]:
+        """Map a picked glyph surface to its closest source residue center."""
+        if not self._tooltip_payload:
+            return None
+        structure = self._tooltip_payload["structure"]
+        coords = self._coords_array_from_structure(structure)
+        if not len(coords):
+            return None
+        index = int(np.argmin(np.linalg.norm(coords - np.asarray(point), axis=1)))
+        metadata = resolve_point_metadata(structure, index)
+        return metadata[0] if metadata else None
+
     def _post_setup(self, renderer: vtkRenderer, render_window, interactor) -> None:
         self._configure_key_bindings(renderer, render_window, interactor)
         if self.enable_tooltip:

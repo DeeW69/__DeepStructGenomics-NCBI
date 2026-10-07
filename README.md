@@ -17,6 +17,31 @@ avancée de v0.4.6. Les résultats restent des analyses de recherche, sans usage
 [Benchmark ARN](#benchmark-arn) · [Hi-C](#analyse-hi-c) ·
 [Documentation](#documentation-et-contributions) · [Versions](#série-v04x)
 
+## Interface desktop — préparation v0.5.0
+
+Disponible sur `main`, **pas encore publiée en release** : une interface PySide6
+regroupe **Accueil → Séquences → Comparaison → Hi-C** autour du moteur existant.
+
+```bash
+python -m pip install --require-hashes --only-binary=:all: -r requirements-gui-lock.txt
+python scripts/run_gui.py
+```
+
+Installer d'abord le socle décrit ci-dessous ; ajouter le verrou `research` pour
+l'analyse Hi-C avancée. Depuis l'accueil, **Essayer la démo C12A** lance une
+comparaison complète hors ligne. Les calculs sont annulables et ne bloquent pas
+la navigation. Les résultats sont enregistrés dans `outputs_gui`.
+
+- Référence NCBI par accession exacte, FASTA ou saisie directe ; mutant facultatif.
+- Appariements, scores, inspection par position et vue VTK intégrée à la demande.
+- Hi-C : contacts équilibrés, boucles candidates et reconstruction inférée.
+- Historique local, réouverture des résultats, figures PNG et accès aux rapports.
+
+![Comparaison ARN dans l'interface desktop](docs/assets/desktop_comparison.png)
+
+La vue ARN 3D reste **schématique** ; aucune conformation moléculaire ni énergie
+MFE n'est déduite de son affichage. [Guide desktop](docs/desktop.md).
+
 ## Installation
 
 Python 3.10 ou ultérieur, depuis le tag `v0.4.6` ou la branche `main`.
@@ -141,11 +166,21 @@ Les prochaines validations concernent des corpus ARN plus larges et non redondan
 des données Hi-C expérimentales avec réplicats, la calibration des q-values et
 la comparaison des reconstructions à des mesures indépendantes.
 
+### Roadmap de l'application
+
+- [x] Première interface desktop à quatre pages, calculs isolés et historique.
+- [x] Import ARN NCBI/FASTA/saisie, comparaison et Hi-C reliés au moteur existant.
+- [ ] v0.5.0 : stabiliser l'interface sur les postes cibles et publier la première GUI.
+- [ ] v0.5.x : recherche NCBI avec aperçu, lots FASTA et paramètres scientifiques avancés dans l'interface.
+- [ ] v0.5.x : sélection croisée Hi-C, gestion de projets et comparaison de plusieurs analyses.
+- [ ] v0.6.0 : distribution desktop simplifiée après validation des parcours et du packaging.
+
 ## Documentation et contributions
 
 | Guide | Sujet |
 | --- | --- |
 | [Pipeline](docs/pipeline.md) | Sources, cache, lots, rapports et visualisation. |
+| [Desktop](docs/desktop.md) | Interface PySide6, parcours, exports et limites. |
 | [Démo](docs/demo.md) | Exemple ARN reproductible et résultats attendus. |
 | [Coordonnées](docs/coordinates.md) | Conventions depuis 0 ou 1. |
 | [Viewers](docs/visualization_3d.md) | Modes 3D, manifests et export PNG. |

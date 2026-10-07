@@ -66,7 +66,7 @@ def validate_secondary_data(data: dict) -> None:
             raise ValueError(f"Appariements et dot-bracket {label} incoherents.")
 
 
-def build_secondary_figure(data: dict):
+def build_secondary_figure(data: dict, *, compact: bool = False):
     """Return a Matplotlib figure showing exactly the exported pairs and scores."""
     import matplotlib.pyplot as plt
     from matplotlib.patches import Arc, Patch
@@ -161,4 +161,21 @@ def build_secondary_figure(data: dict):
     fig.text(0.06, 0.055, "Schéma de structure secondaire · scores heuristiques · aucune conformation 3D prédite",
              color=MUTED, fontsize=10)
     fig.text(0.97, 0.055, "DeeW69", ha="right", color=MUTED, fontsize=10)
+    if compact:
+        # The desktop shell supplies the title, identifier and scientific note.
+        for text in list(fig.texts):
+            text.remove()
+        fig.legends[0].remove()
+        fig.legend(handles=[Patch(color=COMMON, label="Conservée" if mut else "Prédite"),
+                            Patch(color=LOST, label=f"Perdue ({len(lost)})"),
+                            Patch(color=GAINED, label=f"Gagnée ({len(gained)})"),
+                            Patch(facecolor="#fff2d6", edgecolor=LOST, label="Base différente")],
+                   loc="upper center", bbox_to_anchor=(0.5, .99), ncol=2, frameon=False, fontsize=9)
+        grid.update(top=.82, bottom=.12, left=.10, right=.97, hspace=.72)
+        for axis in fig.axes:
+            axis.set_title(axis.get_title(), fontsize=10)
+            axis.set_title(axis.get_title(loc="left"), loc="left", fontsize=10)
+        if mut:
+            ax.set_title(f"Δ score (mutant − WT) · {count}/{shared} positions modifiées",
+                         loc="left", fontsize=10)
     return fig

@@ -1,0 +1,31 @@
+QWidget { font-family: "Segoe UI", sans-serif; font-size: 13px; color: #20374c; }
+QMainWindow, QStackedWidget { background: #f3f6fa; }
+QFrame#sidebar { background: #132b40; border: 0; }
+QFrame#sidebar QLabel { color: #c4d5e3; }
+QFrame#sidebar QLabel#brand { color: white; font-size: 21px; font-weight: 700; }
+QFrame#sidebar QPushButton { text-align: left; background: transparent; color: #c4d5e3; border: 0; padding: 14px; }
+QFrame#sidebar QPushButton:checked { background: #24506b; color: white; border-left: 3px solid #55d7ca; }
+QLabel#heading { font-size: 28px; font-weight: 700; color: #16344a; }
+QLabel#subheading { font-size: 15px; color: #64788b; }
+QLabel#badge { color: #146c66; background: #e0f3ee; padding: 9px; border-radius: 6px; }
+QLabel#metric { font-size: 25px; font-weight: 700; color: #157c82; }
+QFrame#card, QGroupBox { background: white; border: 1px solid #dbe4ed; border-radius: 9px; }
+QGroupBox { margin-top: 13px; padding: 18px 12px 12px; font-weight: 600; }
+QGroupBox::title { subcontrol-origin: margin; left: 14px; padding: 0 5px; }
+QPushButton { background: white; border: 1px solid #c9d7e2; border-radius: 6px; padding: 9px 14px; }
+QPushButton:hover { background: #e9f3f5; border-color: #17888e; }
+QPushButton#primary { background: #127c82; color: white; border: 0; font-weight: 600; }
+QPushButton#primary:hover { background: #0c656b; }
+QPushButton:disabled { color: #8b9aa9; background: #e5eaf0; }
+QLineEdit, QPlainTextEdit, QSpinBox, QComboBox { background: white; border: 1px solid #c9d7e2; border-radius: 5px; padding: 7px; selection-background-color: #157c82; }
+QPlainTextEdit { font-family: Consolas, monospace; }
+QListWidget, QTableWidget { background: white; border: 1px solid #dbe4ed; border-radius: 6px; alternate-background-color: #f3f7fa; }
+QListWidget::item { padding: 14px; }
+QListWidget::item:selected { background: #dcefee; color: #16464c; }
+QHeaderView::section { background: #e9f0f5; border: 0; padding: 8px; }
+QTabWidget::pane { border: 1px solid #dbe4ed; background: white; }
+QTabBar::tab { padding: 10px 20px; background: #e7eef4; }
+QTabBar::tab:selected { background: white; color: #127c82; }
+QProgressBar { border: 0; background: #dce9ee; max-height: 5px; }
+QProgressBar::chunk { background: #17888e; }
+QStatusBar { background: #e7eef4; }

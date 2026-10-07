@@ -1,5 +1,18 @@
 # Historique des versions
 
+## Non publié — préparation v0.5.0
+
+- Interface desktop PySide6 facultative : accueil, séquences, comparaison et Hi-C.
+- Réutilisation du pipeline ARN et de l'analyse Hi-C dans un processus séparé,
+  annulable, avec un dossier unique par calcul et un historique local des résultats.
+- Comparaison 2D et scores par position, inspection des bases/paires, scène VTK
+  intégrée à la demande ; informations techniques repliables et géométrie explicitée.
+- Heatmap Hi-C, boucles et reconstruction inférée depuis les rapports du moteur.
+- Figures PNG, réouverture des manifests/rapports et accès aux exports existants.
+- Extra `gui`, verrou à empreintes séparé, lanceur installé `deepstructgenomics`
+  et tests des parcours desktop hors écran sous Linux/Windows.
+
+
 ## 0.4.6 — 7 octobre 2026 — release globale
 
 - Analyse Hi-C cis : équilibrage à visibilité égale, tests binomiaux négatifs de

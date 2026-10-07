@@ -48,6 +48,27 @@ automatiquement ce verrou.
 
 ## Régénérer le verrou
 
+### Interface desktop (préparation v0.5.0)
+
+PySide6 est facultatif ; le socle CLI ne l'importe pas. Après le verrou principal :
+
+```bash
+python -m pip install --require-hashes --only-binary=:all: -r requirements-gui-lock.txt
+python scripts/run_gui.py
+```
+
+Le paquet expose l'extra `gui` et le lanceur `deepstructgenomics`. Le thème Qt est
+inclus dans le wheel. Les méthodes Hi-C avancées nécessitent aussi `research`.
+Le verrou GUI fixe PySide6 et ses dépendances Qt/Shiboken ; il se régénère avec :
+
+```bash
+uv pip compile requirements-gui.txt --constraint requirements-lock.txt --universal --python-version 3.10 --generate-hashes --output-file requirements-gui-lock.txt --no-python-downloads
+```
+
+La CI exécute les parcours desktop avec `QT_QPA_PLATFORM=offscreen` après les
+tests du socle et de la recherche. Le rendu VTK/OpenGL interactif doit aussi être
+vérifié sur le poste cible ; les tests hors écran ne valident pas les pilotes.
+
 ### Extensions de recherche (depuis v0.4.5)
 
 Après le verrou principal, installer les prédicteurs et statistiques facultatifs :

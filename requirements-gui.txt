@@ -1,0 +1,2 @@
+# Optional desktop interface; keep the core versions constrained by its lock.
+PySide6>=6.8,<6.11

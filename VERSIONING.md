@@ -50,6 +50,8 @@ suffit pas à identifier une révision : utiliser le tag ou le SHA du commit.
 Si les dépendances changent, mettre à jour leurs déclarations et les verrous
 concernés dans le même commit. Le socle utilise `requirements-lock.txt` ;
 ViennaRNA/SciPy utilisent `requirements-research-lock.txt`, contraint par le socle.
+L'interface desktop facultative utilise `requirements-gui-lock.txt`. Sa première
+version est préparée pour v0.5.0 ; les changements sur `main` restent « Non publié ».
 Voir le [guide des dépendances](docs/dependencies.md).
 
 ## Validation et publication
