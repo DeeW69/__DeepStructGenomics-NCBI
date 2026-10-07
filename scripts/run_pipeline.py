@@ -26,6 +26,7 @@ def parse_args() -> argparse.Namespace:
     source.add_argument("--accession", help="Identifiant NCBI (nuccore).")
     source.add_argument("--sequence", help="Sequence ADN/ARN brute (ACGTU).")
     source.add_argument("--fasta", type=Path, help="Fichier FASTA local contenant une seule sequence ADN/ARN.")
+    source.add_argument("--batch-fasta", type=Path, help="FASTA multi-entrees ; dossier de sortie nouveau requis.")
     parser.add_argument("--label", help="Nom associe a --sequence ou --fasta (defaut : identifiant FASTA ou custom_sequence).")
     mutant = parser.add_mutually_exclusive_group()
     mutant.add_argument("--mutant-sequence", help="Sequence mutante pour comparaison.")
@@ -50,12 +51,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cache-dir", type=Path, default=Path("data/cache"))
     parser.add_argument("--refresh-cache", action="store_true", help="Retelecharger la sequence NCBI et ses metadonnees.")
     parser.add_argument("--ncbi-api-key", help="Cle API optionnelle pour augmenter les quotas.")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.batch_fasta and (args.label or args.mutant_sequence or args.mutant_fasta):
+        parser.error("--batch-fasta ne permet pas --label ni une comparaison mutante.")
+    return args
 
 
 def main() -> None:
     args = parse_args()
     try:
+        if args.batch_fasta:
+            from deepstructgenomics.batch import run_fasta_batch
+            summary = run_fasta_batch(args.batch_fasta, args.output_dir,
+                                      top_k=args.top_k, min_abs_delta=args.min_abs_delta,
+                                      base_pair_threshold=args.base_pair_threshold)
+            print(f"Lot termine : {summary['succeeded']} succes, {summary['failed']} erreurs.")
+            if summary["failed"]:
+                raise SystemExit(2)
+            return
         request = PipelineInput(
             accession=args.accession,
             sequence=args.sequence,

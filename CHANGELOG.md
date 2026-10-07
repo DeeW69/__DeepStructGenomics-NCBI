@@ -1,6 +1,15 @@
 # Historique des versions
 
-## Non publié
+## 0.4.2 — 7 octobre 2026
+
+- FASTA par lots : rapports isolés, erreurs par entrée et synthèse JSON.
+
+## 0.4.1 — 7 octobre 2026
+
+- Cache local NCBI atomique, provenance SHA-256 et rafraîchissement explicite.
+- CLI : `--cache-dir` et `--refresh-cache`.
+
+### Visualisation incluse depuis v0.3.0
 
 - Vue interactive et export PNG des appariements secondaires via
   `scripts/view_secondary.py --manifest`, à partir des prédictions exportées :

@@ -256,6 +256,21 @@ python scripts/run_pipeline.py --sequence AUGGCUACG --label test_seq --output-di
 
 Les rapports `.json` et `.md` sont écrits dans le dossier de sortie, tandis que les artefacts de visualisation sont placés dans `outputs/<identifiant>/visualization/`.
 
+### Cache NCBI et lots FASTA
+
+Depuis v0.4.1, `--cache-dir data/cache` conserve les téléchargements NCBI ;
+`--refresh-cache` force leur renouvellement. Les rapports incluent la provenance
+et le SHA-256. Voir [les détails du cache](docs/releases/v0.4.1.md).
+
+Depuis v0.4.2, traiter plusieurs entrées dans un nouveau dossier :
+
+```bash
+python scripts/run_pipeline.py --batch-fasta data/examples/batch.fasta --output-dir outputs_batch
+```
+
+Chaque entrée possède ses rapports ; `batch_summary.json` récapitule les résultats.
+Voir [le comportement des lots et des erreurs](docs/releases/v0.4.2.md).
+
 ### Réponses et erreurs NCBI
 
 Avec `--accession`, le client récupère la séquence FASTA puis son résumé de
@@ -263,7 +278,7 @@ métadonnées. Un FASTA vide ou invalide arrête l'analyse. Si le résumé répo
 avec succès mais contient un JSON vide, invalide ou sans objet de métadonnées
 exploitable, la séquence reste utilisable et les métadonnées du rapport valent
 `{}` pour le client sans cache ; avec cache, elles contiennent seulement
-la cl? `provenance`.
+la clé `provenance`.
 
 Une erreur HTTP, un dépassement de délai ou une erreur de connexion à l'une
 des deux étapes interrompt l'analyse avant la création des rapports. La CLI
