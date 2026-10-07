@@ -2,18 +2,17 @@
 
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](pyproject.toml)
-[![Release v0.3.0](https://img.shields.io/badge/release-v0.3.0-blue.svg)](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.3.0)
+[![Release v0.4.4](https://img.shields.io/badge/release-v0.4.4-blue.svg)](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.4.4)
 [![Tests](https://github.com/DeeW69/__DeepStructGenomics-NCBI/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/DeeW69/__DeepStructGenomics-NCBI/actions/workflows/tests.yml)
 
 DeepStructGenomics-NCBI est un cadre de recherche et d'ingénierie logicielle dédié à l'étude structurale de l'ARN et de la régulation génomique à partir des données publiques du NCBI. L'objectif est de relier systématiquement séquences biologiques, structures (ARN et architecture 3D) et impact fonctionnel potentiel, afin de proposer des analyses mécanistiques exploitables en recherche biomédicale.
 
 **Projet en développement actif — README mis à jour le 7 octobre 2026.**
-La dernière version publiée est **v0.3.0**. Les notes et les exemples téléchargeables
-sont regroupés dans la [release v0.3.0](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.3.0).
-Cette version ajoute l'ouverture par manifeste, les exports CSV et le réglage
-des seuils de comparaison.
-La validation locale du 7 octobre 2026 compte **156 tests réussis** sous
-Windows / Python 3.11.
+La release globale **v0.4.x**, publiée sous le numéro précis **v0.4.4**, regroupe
+le cache NCBI, les lots FASTA, l'outillage d'évaluation ARN et l'exploration Hi-C.
+Les notes et les exemples sont regroupés dans la
+[release v0.4.4](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.4.4).
+La validation locale compte **178 tests réussis** sous Windows / Python 3.11.
 Le [workflow de tests](.github/workflows/tests.yml) est configuré pour
 Linux / Python 3.10 et Windows / Python 3.12 ; le badge ci-dessus suit les
 exécutions sur GitHub.
@@ -24,7 +23,16 @@ exécutions sur GitHub.
 
 ## Features par version
 
-### Après v0.3.0 — changements non publiés
+### v0.4.x — release globale v0.4.4
+
+- **v0.4.1** : cache NCBI local, provenance et rafraîchissement.
+- **v0.4.2** : FASTA par lots, rapports isolés et synthèse des erreurs.
+- **v0.4.3** : métriques ARN et comparaison de méthodes sur références fournies.
+- **v0.4.4** : import de contacts Hi-C en TSV et rapports descriptifs.
+
+Voir les [notes globales et limites scientifiques](docs/releases/v0.4.4.md).
+
+### Améliorations de visualisation incluses dans la série v0.4.x
 
 - Vue comparative des appariements via `scripts/view_secondary.py --manifest` :
   référence et mutant, bases numérotées, paires perdues/gagnées et deltas de score.
@@ -115,7 +123,7 @@ et l'option `--output-dir`.
 
 - **Pipeline séquence → structure → impact** : ingestion de séquences ou d'identifiants NCBI, annotation, modélisation structurale (surtout ARN) puis génération d'indicateurs fonctionnels.
 - **Interprétation des variants** : comparaison de séquences référence/mutant pour estimer les effets structuraux ou régulateurs.
-- **Génomique 3D** (à venir) : synthèse de données de contacts (Hi-C et apparentées) pour relier organisation spatiale du génome et régulation.
+- **Génomique 3D** (exploratoire) : synthèse descriptive de contacts Hi-C ; reconstruction spatiale et analyse fonctionnelle restent à venir.
 
 ## Architecture de dépôt
 
@@ -221,7 +229,7 @@ Pour comparer les appariements, utiliser la vue secondaire ci-dessous.
 
 ## Installation rapide
 
-Depuis le tag `v0.3.0` ou la branche `main`, avec Python 3.10 ou ultérieur. Le verrou est validé
+Depuis le tag `v0.4.4` ou la branche `main`, avec Python 3.10 ou ultérieur. Le verrou est validé
 sous Linux / Python 3.10 et Windows / Python 3.12. Sous macOS / Linux :
 
 ```bash
@@ -353,6 +361,18 @@ un témoin sans paires et des prédictions externes facultatives. Le jeu inclus
 est synthétique ; il ne constitue pas une validation biologique.
 Voir [les formats et limites de l'évaluation](docs/releases/v0.4.3.md).
 
+## Exploration Hi-C (v0.4.4)
+
+```bash
+python scripts/explore_hic.py --contacts data/examples/hic_contacts.tsv --assembly synthetic --bin-size 10000 --output-dir outputs_hic
+```
+
+Import TSV de contacts binés, rapports JSON/Markdown, poids cis/trans et couverture
+par bin. Assemblage et résolution sont obligatoires. Les coordonnées commencent
+à 0 ; les doublons et contacts symétriques sont refusés pour éviter le double comptage.
+Cet outil ne reconstruit pas de structure 3D et ne corrige pas les biais Hi-C.
+Voir [les formats et limites](docs/releases/v0.4.4.md).
+
 ## Comparaison des appariements ARN
 
 Depuis `main`, régénérer les résultats pour inclure `secondary_structures.json`,
@@ -418,14 +438,16 @@ retours, sans calendrier de livraison annoncé.
 - [x] Exporter les positions les plus modifiées en CSV pour les tableurs et notebooks.
 - [x] Exposer les seuils et le nombre de positions à afficher dans la CLI.
 
-### v0.4.x — exploration et traitement par lots prévus
+### v0.4.x — exploration et traitement par lots
 
-Ces pistes restent à évaluer et à implémenter ; elles ne font pas partie de v0.3.0.
+La release globale v0.4.4 regroupe quatre incréments, un commit par point.
 
-- [ ] Cache local des séquences NCBI avec provenance et option de rafraîchissement.
-- [ ] Traitement de plusieurs séquences FASTA par lot, avec un rapport par entrée.
-- [ ] Évaluation des prédictions ARN sur des jeux de référence et comparaison à d'autres méthodes.
-- [ ] Intégration exploratoire de données de contacts Hi-C pour la génomique 3D.
+- [x] **v0.4.1** — Cache local des séquences NCBI avec provenance et rafraîchissement.
+- [x] **v0.4.2** — Traitement FASTA par lots avec un rapport par entrée.
+- [x] **v0.4.3** — Outillage d'évaluation ARN, jeu synthétique et comparaison de méthodes.
+- [x] **v0.4.4** — Import et synthèse exploratoire de contacts Hi-C.
+- [ ] Validation ARN sur un corpus expérimental indépendant et comparaison de méthodes externes exécutées.
+- [ ] Normalisation Hi-C, détection statistique de domaines/boucles et reconstruction 3D.
 
 ## Suivi et contributions
 

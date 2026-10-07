@@ -1,5 +1,13 @@
 # Historique des versions
 
+## 0.4.4 — 7 octobre 2026 — release globale v0.4.x
+
+- Import exploratoire Hi-C TSV avec assemblage/résolution explicites, contrôles
+  des coordonnées et des doublons ; rapports JSON/Markdown, poids cis/trans,
+  couverture par bin, répartition des distances et contacts de poids maximal.
+- Inclut les incréments v0.4.1, v0.4.2 et v0.4.3 ci-dessous.
+- Ni correction des biais Hi-C ni reconstruction 3D ; exemples synthétiques.
+
 ## 0.4.3 — 7 octobre 2026
 
 - Évaluation ARN : précision/rappel/F1, méthodes témoins et prédictions externes.

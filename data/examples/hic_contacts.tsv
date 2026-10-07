@@ -1,0 +1,5 @@
+chrom1	start1	chrom2	start2	count
+chr1	0	chr1	0	8
+chr1	0	chr1	10000	12
+chr1	0	chr1	20000	4
+chr1	10000	chr2	0	2

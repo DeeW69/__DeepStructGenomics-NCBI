@@ -19,6 +19,11 @@ incompatibles pendant cette phase doivent être annoncées dans une version
 mineure et expliquées dans les notes de migration ; elles ne doivent pas être
 introduites silencieusement dans une version corrective.
 
+Exception explicite pour la série v0.4.x : les quatre points de la roadmap
+utilisent les incréments v0.4.1 à v0.4.4, un commit par point. La release globale
+est publiée sous le tag précis `v0.4.4` et le titre « v0.4.x — exploration et lots ».
+Les incréments intermédiaires ne nécessitent pas de releases GitHub séparées.
+
 `v0.2.x` désigne une **série**, pas une version publiable. Une release utilise
 toujours un numéro précis, par exemple `v0.2.1`.
 
@@ -108,6 +113,7 @@ ne pas réutiliser le numéro retiré ni déplacer un tag déjà publié.
 
 | Version | Date | Contenu |
 | --- | --- | --- |
+| [v0.4.4](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.4.4) | 7 octobre 2026 | Série v0.4.x : cache, lots FASTA, évaluation ARN et exploration Hi-C. |
 | [v0.2.0](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.0) | 6 octobre 2026 | Entrées FASTA, rapports enrichis, démo et améliorations du viewer. |
 | [v0.2.1](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.2.1) | 6 octobre 2026 | Dépendances verrouillées, robustesse NCBI, 132 tests et guide des coordonnées. |
 | [v0.3.0](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases/tag/v0.3.0) | 6 octobre 2026 | Ouverture par manifeste, exports CSV et seuils configurables. |
