@@ -342,6 +342,17 @@ silencieusement par suppression de caractères invalides sont désormais
 refusées. Corriger la séquence source avant de relancer l'analyse afin de
 conserver une correspondance fiable entre positions et résultats.
 
+## Évaluation ARN (v0.4.3)
+
+```bash
+python scripts/evaluate_rna.py --reference data/examples/rna_reference.json --output outputs_evaluation/metrics.json
+```
+
+Précision, rappel et F1 comparent le modèle interne, une méthode gloutonne,
+un témoin sans paires et des prédictions externes facultatives. Le jeu inclus
+est synthétique ; il ne constitue pas une validation biologique.
+Voir [les formats et limites de l'évaluation](docs/releases/v0.4.3.md).
+
 ## Comparaison des appariements ARN
 
 Depuis `main`, régénérer les résultats pour inclure `secondary_structures.json`,

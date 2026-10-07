@@ -1,5 +1,10 @@
 # Historique des versions
 
+## 0.4.3 — 7 octobre 2026
+
+- Évaluation ARN : précision/rappel/F1, méthodes témoins et prédictions externes.
+- Jeu synthétique reproductible ; validation biologique indépendante encore nécessaire.
+
 ## 0.4.2 — 7 octobre 2026
 
 - FASTA par lots : rapports isolés, erreurs par entrée et synthèse JSON.

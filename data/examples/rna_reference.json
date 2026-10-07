@@ -1,0 +1,8 @@
+{
+  "source": "Synthetic hand-authored test fixtures, not experimental structures or a biological validation dataset.",
+  "records": [
+    {"id": "hairpin", "sequence": "GGGGAAAACCCC", "reference": "((((....))))"},
+    {"id": "unpaired", "sequence": "AAAAAAAA", "reference": "........"},
+    {"id": "two_hairpins", "sequence": "GAAACGAAAC", "reference": "(...)(...)"}
+  ]
+}
