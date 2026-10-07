@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deepstructgenomics-ncbi"
-version = "0.3.0"
+version = "0.4.1"
 description = "Pipeline ARN/genomique reliant sequence -> structure -> impact a partir des donnees NCBI."
 authors = [
   {name = "DeeW69"}

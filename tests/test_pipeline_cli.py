@@ -193,7 +193,9 @@ def test_ncbi_empty_summary_still_exports_the_valid_sequence(cli, tmp_path, monk
     report = json.loads((output_dir / "NC_TEST.1.json").read_text(encoding="utf-8"))
     assert report["sequence"] == "AUGC"
     assert report["description"] == "DNA reference"
-    assert report["annotations"]["metadata"] == {}
+    metadata = report["annotations"]["metadata"]
+    assert set(metadata) == {"provenance"}
+    assert metadata["provenance"]["requested_accession"] == "NC_TEST.1"
     assert (output_dir / "NC_TEST.1.md").is_file()
     assert (output_dir / "NC_TEST.1/visualization/visualization_manifest.json").is_file()
     assert "Rapports generes" in capsys.readouterr().out

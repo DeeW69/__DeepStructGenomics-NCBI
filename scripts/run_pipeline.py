@@ -47,6 +47,8 @@ def parse_args() -> argparse.Namespace:
         help="Seuil |delta| pour comptabiliser une paire de bases affectee (defaut : 0.2).",
     )
     parser.add_argument("--ncbi-email", help="Email requis par les E-utilities.")
+    parser.add_argument("--cache-dir", type=Path, default=Path("data/cache"))
+    parser.add_argument("--refresh-cache", action="store_true", help="Retelecharger la sequence NCBI et ses metadonnees.")
     parser.add_argument("--ncbi-api-key", help="Cle API optionnelle pour augmenter les quotas.")
     return parser.parse_args()
 
@@ -64,9 +66,10 @@ def main() -> None:
             top_k=args.top_k,
             min_abs_delta=args.min_abs_delta,
             base_pair_threshold=args.base_pair_threshold,
+            refresh_cache=args.refresh_cache,
         )
         ncbi_config = NCBIConfig(email=args.ncbi_email, api_key=args.ncbi_api_key)
-        pipeline = DeepStructPipeline(PipelineConfig(ncbi=ncbi_config))
+        pipeline = DeepStructPipeline(PipelineConfig(ncbi=ncbi_config, cache_dir=args.cache_dir))
         result = pipeline.run_and_export(request, output_dir=Path(args.output_dir))
     except requests.RequestException:
         raise SystemExit("Erreur NCBI : requete impossible. Verifier l'accession et la connexion reseau.") from None

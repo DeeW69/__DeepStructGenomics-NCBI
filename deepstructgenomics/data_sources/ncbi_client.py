@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -24,12 +29,32 @@ class SequenceRecord:
 class NCBIClient:
     """Minimal wrapper around the NCBI REST endpoints."""
 
-    def __init__(self, config: Optional[NCBIConfig] = None) -> None:
+    def __init__(self, config: Optional[NCBIConfig] = None, cache_dir: Optional[Path] = None) -> None:
         self.config = config or NCBIConfig()
+        self.cache_dir = Path(cache_dir) if cache_dir is not None else None
         self._session = requests.Session()
 
-    def fetch_sequence(self, accession: str) -> SequenceRecord:
+    def fetch_sequence(self, accession: str, *, refresh: bool = False) -> SequenceRecord:
         """Fetches a nucleotide sequence (FASTA + metadata) from NCBI."""
+
+        key = [self.config.base_url, self.config.database, accession]
+        cache_path = None
+        if self.cache_dir is not None:
+            digest = hashlib.sha256(json.dumps(key).encode()).hexdigest()
+            cache_path = self.cache_dir / f"{digest}.json"
+            if cache_path.exists() and not refresh:
+                try:
+                    payload = json.loads(cache_path.read_text(encoding="utf-8"))
+                    record = SequenceRecord(**payload["record"])
+                    checksum = hashlib.sha256(record.sequence.encode()).hexdigest()
+                    if (payload["schema"] != 1 or payload["key"] != key
+                            or checksum != record.metadata["provenance"]["sha256"]
+                            or normalize_rna_sequence(record.sequence) != record.sequence):
+                        raise ValueError("Cache incoherent")
+                    record.metadata["provenance"]["cache_hit"] = True
+                    return record
+                except (ValueError, KeyError, TypeError, AttributeError):
+                    pass  # A corrupt entry is replaced only after a successful fetch.
 
         fasta_text = self._call_endpoint(
             "efetch.fcgi",
@@ -42,12 +67,31 @@ class NCBIClient:
         )
         seq_id, description, sequence = self._parse_fasta(fasta_text)
         metadata = self._fetch_summary(accession)
-        return SequenceRecord(
+        record = SequenceRecord(
             identifier=seq_id or accession,
             description=description or metadata.get("title", ""),
             sequence=sequence,
             metadata=metadata,
         )
+        if cache_path is not None:
+            record.metadata["provenance"] = {
+                "source": "NCBI", "base_url": self.config.base_url,
+                "database": self.config.database, "requested_accession": accession,
+                "resolved_identifier": record.identifier,
+                "retrieved_at": datetime.now(timezone.utc).isoformat(),
+                "sha256": hashlib.sha256(sequence.encode()).hexdigest(),
+                "cache_hit": False,
+            }
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            fd, temporary = tempfile.mkstemp(dir=cache_path.parent, suffix=".tmp")
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                    json.dump({"schema": 1, "key": key, "record": asdict(record)}, stream)
+                os.replace(temporary, cache_path)
+            finally:
+                if os.path.exists(temporary):
+                    os.unlink(temporary)
+        return record
 
     def _fetch_summary(self, accession: str) -> Dict[str, Any]:
         """Retrieve metadata, tolerating empty or malformed successful responses.

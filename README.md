@@ -262,7 +262,8 @@ Avec `--accession`, le client récupère la séquence FASTA puis son résumé de
 métadonnées. Un FASTA vide ou invalide arrête l'analyse. Si le résumé répond
 avec succès mais contient un JSON vide, invalide ou sans objet de métadonnées
 exploitable, la séquence reste utilisable et les métadonnées du rapport valent
-`{}`.
+`{}` pour le client sans cache ; avec cache, elles contiennent seulement
+la cl? `provenance`.
 
 Une erreur HTTP, un dépassement de délai ou une erreur de connexion à l'une
 des deux étapes interrompt l'analyse avant la création des rapports. La CLI

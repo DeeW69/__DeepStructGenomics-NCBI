@@ -55,6 +55,7 @@ class PipelineInput:
     top_k: int = 10
     min_abs_delta: float = 0.1
     base_pair_threshold: float = 0.2
+    refresh_cache: bool = False
 
     def __post_init__(self) -> None:
         sources = (self.accession, self.sequence, self.fasta_path)
@@ -118,7 +119,7 @@ class DeepStructPipeline:
 
     def __init__(self, config: Optional[PipelineConfig] = None) -> None:
         self.config = config or PipelineConfig()
-        self.ncbi_client = NCBIClient(self.config.ncbi)
+        self.ncbi_client = NCBIClient(self.config.ncbi, cache_dir=self.config.cache_dir)
         self.config.cache_dir.mkdir(parents=True, exist_ok=True)
         self.config.default_output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -180,6 +181,8 @@ class DeepStructPipeline:
 
     def _resolve_sequence(self, request: PipelineInput) -> SequenceRecord:
         if request.accession is not None:
+            if request.refresh_cache:
+                return self.ncbi_client.fetch_sequence(request.accession, refresh=True)
             return self.ncbi_client.fetch_sequence(request.accession)
         if request.fasta_path is not None:
             return load_fasta_record(request.fasta_path, label=request.sequence_label)
