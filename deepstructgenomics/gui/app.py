@@ -29,8 +29,11 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         from PySide6.QtWidgets import QApplication
-    except ImportError:
-        parser.exit(2, "Interface facultative absente : installer requirements-gui-lock.txt.\n")
+    except ImportError as exc:
+        from importlib.util import find_spec
+        if find_spec("PySide6") is None:
+            parser.exit(2, "Interface facultative absente : installer requirements-gui-lock.txt.\n")
+        parser.exit(2, f"Qt ne peut pas charger ses bibliothèques système : {exc}\nVoir docs/desktop.md.\n")
     from .main_window import MainWindow
     app = QApplication.instance() or QApplication(sys.argv[:1])
     app.setApplicationName("DeepStructGenomics")

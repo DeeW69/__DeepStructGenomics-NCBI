@@ -27,6 +27,12 @@ Après installation du wheel avec l'extra `gui`, utiliser `deepstructgenomics`
 ou `python -m deepstructgenomics.gui.app` depuis n'importe quel répertoire.
 Les fichiers d'exemple Hi-C sont fournis dans le dépôt et l'archive source.
 
+Sur un système Linux minimal, les roues Python ne fournissent pas toutes les
+bibliothèques graphiques système. Si Qt signale `libEGL.so.1` manquante, installer
+`libegl1` (Ubuntu/Debian : `sudo apt-get install libegl1`). Une session graphique
+native est nécessaire pour l'usage interactif ; `QT_QPA_PLATFORM=offscreen` est
+réservé aux tests 2D et désactive la vue VTK intégrée.
+
 ## Parcours ARN
 
 1. Cliquer sur **Essayer la démo C12A**, ou ouvrir **Séquences ARN**.

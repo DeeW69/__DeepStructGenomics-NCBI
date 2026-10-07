@@ -42,6 +42,11 @@ jobs:
         run: python -m pytest
       - name: Install optional desktop interface
         run: "python -m pip install --require-hashes --only-binary=:all: -r requirements-gui-lock.txt"
+      - name: Install Qt system library on Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1
       - name: Check desktop dependency compatibility
         run: python -m pip check
       - name: Test desktop workflows offscreen
