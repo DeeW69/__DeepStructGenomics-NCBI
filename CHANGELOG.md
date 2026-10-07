@@ -1,5 +1,16 @@
 # Historique des versions
 
+## 0.4.6 — 7 octobre 2026 — release globale
+
+- Analyse Hi-C cis : équilibrage à visibilité égale, tests binomiaux négatifs de
+  boucles, permutations d'isolation pour les frontières et correction BH.
+- Reconstruction par distances de contacts et MDS, avec stress, masques et
+  diagnostic des graphes déconnectés ; sorties JSON/Markdown/TSV/BED/PNG.
+- Exemple synthétique reproductible et tests numériques, dont non-convergence
+  et surdispersion. Limite de 400 bins et hypothèses documentées.
+- README nettoyé, guides pipeline/Hi-C séparés, VERSIONING.md actualisé.
+- Inclut v0.4.5 ; 197 tests locaux avec extensions de recherche.
+
 ## 0.4.5 — 7 octobre 2026
 
 - Benchmark sur 30 références bpRNA/PDB, provenance et sélection reproductible.

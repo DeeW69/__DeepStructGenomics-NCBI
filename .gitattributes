@@ -1,0 +1,5 @@
+# Stable byte-level fingerprints for the bundled scientific corpus/results.
+data/benchmarks/*.json text eol=lf
+docs/benchmarks/*.json text eol=lf
+data/examples/hic_region.tsv text eol=lf
+data/examples/hic_region_truth.json text eol=lf

@@ -1,0 +1,17 @@
+{
+  "source": "Synthetic Poisson generator; no experimental Hi-C data",
+  "seed": 46,
+  "bins": 32,
+  "bin_size": 10000,
+  "boundary_bin": 16,
+  "added_loop": [
+    5,
+    10
+  ],
+  "within_domain_amplitude": 100,
+  "cross_domain_amplitude": 3,
+  "distance_decay_exponent": 0.5,
+  "bias_log_sd": 0.25,
+  "loop_multiplier": 15,
+  "warning": "Domain structure violates a homogeneous distance-only loop null; extra loop calls are not biological discoveries."
+}

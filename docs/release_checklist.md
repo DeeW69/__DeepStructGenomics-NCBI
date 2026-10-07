@@ -4,6 +4,11 @@ Guide concis pour préparer, taguer et publier une version de DeepStructGenomics
 
 ## 1. Préparer la release
 
+Depuis v0.4.5, vérifier aussi l'environnement optionnel
+`requirements-research-lock.txt`, le benchmark bpRNA/PDB avec `--viennarna`
+et, depuis v0.4.6, l'exemple Hi-C `--advanced`. Joindre leurs sorties aux démos
+de la release et conserver les limites de validation dans les notes.
+
 1. Confirmer que l’arbre est propre :
    ```powershell
    git status -sb

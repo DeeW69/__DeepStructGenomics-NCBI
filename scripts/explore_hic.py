@@ -16,8 +16,40 @@ def main():
     parser.add_argument("--bin-size", type=int, required=True)
     parser.add_argument("--top-k", type=int, default=10)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--advanced", action="store_true", help="Equilibrage, tests et reconstruction d'une region cis.")
+    parser.add_argument("--chromosome")
+    parser.add_argument("--start", type=int)
+    parser.add_argument("--end", type=int)
+    parser.add_argument("--missing-as-zero", action="store_true", help="Declarer que les contacts absents sont des zeros observes.")
+    parser.add_argument("--window-bins", type=int, default=3)
+    parser.add_argument("--permutations", type=int, default=999)
+    parser.add_argument("--seed", type=int, default=46)
+    parser.add_argument("--fdr", type=float, default=0.05)
+    parser.add_argument("--min-separation", type=int, default=2)
+    parser.add_argument("--distance-exponent", type=float, default=1 / 3)
+    parser.add_argument("--max-iterations", type=int, default=2000)
+    parser.add_argument("--tolerance", type=float, default=1e-6)
+    parser.add_argument("--no-plot", action="store_true")
     args = parser.parse_args()
     try:
+        if args.advanced:
+            if args.start is None or args.end is None or not args.chromosome:
+                raise ValueError("--advanced requiert --chromosome, --start et --end.")
+            from deepstructgenomics.analysis.hic_advanced import analyze_region
+            from deepstructgenomics.reporting.hic_report import export_hic_analysis
+            result = analyze_region(args.contacts, assembly=args.assembly, chromosome=args.chromosome,
+                                    start=args.start, end=args.end, bin_size=args.bin_size,
+                                    missing_as_zero=args.missing_as_zero, window=args.window_bins,
+                                    permutations=args.permutations, seed=args.seed, fdr=args.fdr,
+                                    min_separation=args.min_separation, exponent=args.distance_exponent,
+                                    tolerance=args.tolerance, max_iterations=args.max_iterations)
+            # Avoid mixing stale successful tables with a later unsuccessful run.
+            args.output_dir.mkdir(parents=True, exist_ok=False)
+            export_hic_analysis(result, args.output_dir, plot=not args.no_plot)
+            print(args.output_dir / "hic_analysis.json")
+            if result["status"] != "ok":
+                raise SystemExit(2)
+            return
         result = summarize_contacts(args.contacts, assembly=args.assembly,
                                     bin_size=args.bin_size, top_k=args.top_k)
         args.output_dir.mkdir(parents=True, exist_ok=True)
