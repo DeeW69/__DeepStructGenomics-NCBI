@@ -10,6 +10,9 @@ appariements secondaires prédits par l'heuristique.
 Pour une comparaison lisible des appariements, privilégier
 `scripts/view_secondary.py --manifest chemin/visualization_manifest.json`
 après régénération des résultats sur `main` ; voir le [guide de démo](demo.md).
+Ce viewer ouvre désormais les tiges/boucles 2D par défaut ; `--view arcs` conserve
+le diagramme linéaire et les deltas. Dans le desktop, l'onglet **3D schématique**
+reste complémentaire à **Structure secondaire**.
 
 ## Installation
 

@@ -798,7 +798,7 @@ class OverlayBase:
         for i in range(257):
             t = (i / 256.0) * 2.0 - 1.0
             neutral = np.array([0.88, 0.90, 0.93])
-            endpoint = np.array([0.90, 0.27, 0.13] if t >= 0 else [0.16, 0.55, 0.94])
+            endpoint = np.array([0.784, 0.298, 0.282] if t >= 0 else [0.157, 0.494, 0.753])
             r, g, b = neutral * (1.0 - abs(t)) + endpoint * abs(t)
             lut.SetTableValue(i, r, g, b, 1.0)
         return lut
@@ -1103,6 +1103,7 @@ class OverlayDeltaViewer(OverlayBase):
         link_metric: Optional[str] = None,
         link_min_distance: Optional[float] = None,
         link_max_distance: Optional[float] = None,
+        glyph_scale: float = 1.0,
     ) -> None:
         super().__init__(
             title="DeepStructGenomics - Overlay Delta",
@@ -1122,6 +1123,9 @@ class OverlayDeltaViewer(OverlayBase):
         self.mut_path = Path(mutant_structure)
         self.wt_scores_path = Path(wt_scores)
         self.mut_scores_path = Path(mutant_scores)
+        if not np.isfinite(glyph_scale) or glyph_scale <= 0:
+            raise ValueError("glyph_scale doit etre positif et fini.")
+        self.glyph_scale = float(glyph_scale)
 
     def _build_scene(self, renderer: vtkRenderer) -> None:
         wt_structure = load_structure(self.wt_path)
@@ -1146,7 +1150,7 @@ class OverlayDeltaViewer(OverlayBase):
 
         wt_actor = self._make_glyph_actor(
             wt_poly,
-            sphere_radius=1.05,
+            sphere_radius=1.05 * self.glyph_scale,
             opacity=0.22,
             scalars=None,
             solid_rgb=(170, 170, 210),
@@ -1173,7 +1177,7 @@ class OverlayDeltaViewer(OverlayBase):
         lut = self._lut_diverging()
         mut_actor = self._make_glyph_actor(
             mut_poly,
-            sphere_radius=1.2,
+            sphere_radius=1.2 * self.glyph_scale,
             opacity=0.98,
             scalars=delta_scalars,
             solid_rgb=None,
@@ -1187,7 +1191,7 @@ class OverlayDeltaViewer(OverlayBase):
         self._mut_actor = mut_actor
         self._backbone_actor = None
         if self.show_backbone:
-            backbone = self._create_backbone_actor(mut_structure)
+            backbone = self._create_backbone_actor(mut_structure, radius=.25 * self.glyph_scale)
             if backbone:
                 renderer.AddActor(backbone)
                 self._backbone_actor = backbone

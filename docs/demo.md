@@ -6,7 +6,7 @@ Le mutant porte une substitution C → A à la position 12, comptée depuis 1.
 Ces séquences illustrent le pipeline ; elles ne proviennent ni d'un organisme
 identifié ni d'un patient.
 
-Après l'[installation](../README.md#installation-rapide), lancer depuis la racine
+Après l'[installation](../README.md#installation), lancer depuis la racine
 du dépôt, sous Windows, macOS ou Linux :
 
 ```bash
@@ -37,6 +37,11 @@ python scripts/view_secondary.py --manifest outputs_demo/offline_demo/visualizat
 La figure utilise les paires exportées dans `secondary_structures.json` et les
 scores calculés, sans inventer une conformation 3D. Ajouter
 `--export outputs_demo/comparison_secondary.png --export-only` pour un PNG sans fenêtre.
+Le rendu par défaut montre les tiges et boucles, les bases A/U/G/C et les extrémités
+5′/3′. **Vert** : paire conservée ; **bleu pointillé** : paire perdue ; **rouge** :
+nouvelle paire. Ajouter `--view arcs` pour retrouver les arcs et les barres de delta.
+L'application desktop ouvre cette même vue 2D en premier ; voir le
+[guide desktop](desktop.md#parcours-arn).
 
 Avec les paramètres par défaut :
 

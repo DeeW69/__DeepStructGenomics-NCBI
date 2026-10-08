@@ -2,6 +2,14 @@
 
 ## Non publié — préparation v0.5.0
 
+- Vue ARN principale en tiges/boucles 2D, bases colorées, extrémités 5′/3′ et
+  positions communes lorsque les appariements sont compatibles. Comparaison
+  des paires conservées (vert), perdues (bleu) et nouvelles (rouge).
+- Onglets Structure secondaire, Séquence, Delta structural et 3D schématique ;
+  inspection du contexte structural, sélection synchronisée et lettres adaptées au zoom.
+- Vue VTK complémentaire avec glyphes plus petits/mats et lettres des bases.
+- CLI `view_secondary.py` : tiges/boucles par défaut, `--view arcs` pour la vue précédente.
+
 - Interface desktop PySide6 facultative : accueil, séquences, comparaison et Hi-C.
 - Réutilisation du pipeline ARN et de l'analyse Hi-C dans un processus séparé,
   annulable, avec un dossier unique par calcul et un historique local des résultats.

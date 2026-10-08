@@ -15,6 +15,8 @@ def main():
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--export", type=Path, help="Enregistrer la figure (par exemple comparaison.png).")
     parser.add_argument("--export-only", action="store_true", help="Exporter sans ouvrir de fenetre.")
+    parser.add_argument("--view", choices=["structure", "arcs"], default="structure",
+                        help="Tiges/boucles (defaut), ou diagramme d'arcs et deltas.")
     args = parser.parse_args()
     if args.export_only and not args.export:
         parser.error("--export-only requiert --export")
@@ -24,9 +26,11 @@ def main():
         matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from deepstructgenomics.visualization.secondary_view import build_secondary_figure, load_secondary_data
+    from deepstructgenomics.visualization.secondary_diagram import build_structure_diagram
 
     try:
-        figure = build_secondary_figure(load_secondary_data(args.manifest))
+        draw = build_structure_diagram if args.view == "structure" else build_secondary_figure
+        figure = draw(load_secondary_data(args.manifest))
         if args.export:
             args.export.parent.mkdir(parents=True, exist_ok=True)
             figure.savefig(args.export, dpi=150, facecolor="white")

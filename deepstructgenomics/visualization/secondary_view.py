@@ -10,10 +10,11 @@ from .io_structures import resolve_manifest_bundle
 
 INK = "#19334b"
 MUTED = "#64748b"
-COMMON = "#187f86"
-LOST = "#cc5838"
-GAINED = "#7952b3"
+COMMON = "#28866c"
+LOST = "#287ec0"
+GAINED = "#c84c48"
 DECREASE = "#287ec0"
+INCREASE = "#c84c48"
 
 
 def load_secondary_data(manifest: str | Path) -> dict:
@@ -137,7 +138,7 @@ def build_secondary_figure(data: dict, *, compact: bool = False):
     else:
         positions = list(range(1, shared + 1))
         delta = [mut["scores"][i] - wt["scores"][i] for i in range(shared)]
-        ax.bar(positions, delta, width=0.58, color=[DECREASE if v < 0 else LOST for v in delta], zorder=3)
+        ax.bar(positions, delta, width=0.58, color=[DECREASE if v < 0 else INCREASE for v in delta], zorder=3)
         zeros = [p for p, value in zip(positions, delta) if abs(value) < 1e-9]
         ax.scatter(zeros, [0] * len(zeros), s=15, color="#afbfcc", zorder=4)
         if shared <= 40:
@@ -145,7 +146,7 @@ def build_secondary_figure(data: dict, *, compact: bool = False):
                 if abs(value) > 1e-9:
                     ax.text(position, value + (-0.045 if value < 0 else 0.025), f"{value:+.3f}",
                             ha="center", va="top" if value < 0 else "bottom", fontsize=10,
-                            weight="bold", color=DECREASE if value < 0 else LOST)
+                            weight="bold", color=DECREASE if value < 0 else INCREASE)
         count = sum(abs(value) > 1e-9 for value in delta)
         ax.set_title(f"Δ score = mutant − WT  ·  {count}/{shared} positions communes modifiées",
                      loc="left", color=INK, fontsize=13, pad=12)

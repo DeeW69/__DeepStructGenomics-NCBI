@@ -49,8 +49,14 @@ def test_demo_process_to_comparison_and_recent_reopen(app, window):
     assert window.pages.currentIndex() == 2, window.message.text()
     assert window.comparison.table.rowCount() == 12
     assert window.comparison.table.item(11, 5).text() == "-0.700"
+    assert window.comparison.tabs.currentIndex() == 0
+    assert window.comparison.tabs.tabText(0) == "Structure secondaire"
+    assert window.comparison.table.item(4, 6).text() == "Boucle terminale"
     window.comparison.position.setValue(12)
     assert "C" in window.comparison.detail.text() and "12 ↔ 1" in window.comparison.detail.text()
+    figure = window.comparison.figure_view.figure
+    for axis, coordinates in figure.rna_coordinates.items():
+        assert figure.rna_selections[axis].get_offsets()[0].tolist() == coordinates[11].tolist()
     window.navigate(0)
     window.open_recent(window.recents.item(0))
     assert window.pages.currentIndex() == 2
