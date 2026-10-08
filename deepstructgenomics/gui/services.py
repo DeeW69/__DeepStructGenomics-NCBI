@@ -3,9 +3,11 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 from uuid import uuid4
+import hashlib
 
 from deepstructgenomics.config import NCBIConfig, PipelineConfig
 from deepstructgenomics.pipeline import DeepStructPipeline, PipelineInput
+from deepstructgenomics.data_sources.ncbi_client import NCBIClient
 from deepstructgenomics.visualization.secondary_view import load_secondary_data
 
 
@@ -20,14 +22,35 @@ def new_run_directory(workspace, kind):
 def run_rna(workspace, parameters):
     parameters = dict(parameters)
     email = parameters.pop("ncbi_email", None)
+    expected = parameters.pop("expected_ncbi_sha256", None)
     directory = new_run_directory(workspace, "rna")
     pipeline = DeepStructPipeline(PipelineConfig(
         ncbi=NCBIConfig(email=email), cache_dir=Path(workspace).resolve() / "cache",
         default_output_dir=directory,
     ))
+    if expected:
+        record = pipeline.ncbi_client.fetch_sequence(parameters["accession"], refresh=parameters.get("refresh_cache", False))
+        if hashlib.sha256(record.sequence.encode()).hexdigest() != expected:
+            raise ValueError("La séquence NCBI a changé depuis l'aperçu. Sélectionner de nouveau la référence.")
+        parameters["refresh_cache"] = False
     result = pipeline.run_and_export(PipelineInput(**parameters), directory)
     return {"kind": "rna", "path": str(result.visualization_paths.manifest_path),
             "directory": str(directory), "label": result.sequence_record.identifier}
+
+
+def search_ncbi(workspace, parameters):
+    parameters = dict(parameters)
+    client = NCBIClient(NCBIConfig(email=parameters.pop("ncbi_email", None)))
+    return client.search_sequences(**parameters)
+
+
+def preview_ncbi(workspace, parameters):
+    client = NCBIClient(NCBIConfig(email=parameters.get("ncbi_email")), cache_dir=Path(workspace).resolve() / "cache")
+    accession = parameters["accession"]
+    record = client.fetch_sequence(accession)
+    return {"accession": accession, "identifier": record.identifier, "description": record.description,
+            "sequence": record.sequence, "metadata": record.metadata,
+            "sha256": hashlib.sha256(record.sequence.encode()).hexdigest()}
 
 
 def run_hic(workspace, parameters):

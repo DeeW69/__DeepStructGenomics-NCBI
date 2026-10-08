@@ -9,9 +9,11 @@ from .widgets import button, label
 
 class SequencesPage(QWidget):
     requested = Signal(dict)
+    search_requested = Signal()
 
     def __init__(self):
         super().__init__()
+        self.ncbi_preview = None
         layout = QVBoxLayout(self)
         layout.setContentsMargins(26, 22, 26, 20)
         layout.setSpacing(14)
@@ -42,8 +44,9 @@ class SequencesPage(QWidget):
         form.addRow("Accession", self.accession)
         form.addRow("E-mail", self.email)
         form.addRow(self.refresh)
+        form.addRow(button("Rechercher un gène ou une séquence…", self.search_requested.emit))
         self.sources.addWidget(ncbi_widget)
-        self.sources.setMaximumHeight(150)
+        self.sources.setMaximumHeight(190)
         layout.addWidget(self.sources)
         self.source.currentIndexChanged.connect(self.sources.setCurrentIndex)
         form = QFormLayout()
@@ -51,6 +54,12 @@ class SequencesPage(QWidget):
         self.analysis_label.setPlaceholderText("Facultatif · sinon identifiant de la source")
         form.addRow("Nom de l'analyse", self.analysis_label)
         layout.addLayout(form)
+        self.reference_note = label("")
+        self.reference_note.hide()
+        self.source.currentIndexChanged.connect(
+            lambda index: self.reference_note.setVisible(index == 2 and self.ncbi_preview is not None))
+        layout.addWidget(self.reference_note)
+        self.accession.textChanged.connect(self.invalidate_preview)
         mutant_box = QGroupBox("Mutant facultatif")
         mutant_layout = QVBoxLayout(mutant_box)
         self.mutant_source = QComboBox()
@@ -94,6 +103,20 @@ class SequencesPage(QWidget):
         self.mutant.setPlainText("GGGGAAAACCCA")
         self.analysis_label.setText("demo_C12A")
 
+    def invalidate_preview(self, *_):
+        self.ncbi_preview = None
+        self.reference_note.hide()
+
+    def use_ncbi(self, preview):
+        self.source.setCurrentIndex(2)
+        self.accession.setText(preview["accession"])
+        self.refresh.setChecked(False)
+        self.ncbi_preview = preview
+        length = len(preview["sequence"])
+        self.reference_note.setText(f"Référence sélectionnée : {preview['accession']} · {length} nt\n{preview['description']}"
+                                   + ("\nARN long : calcul Nussinov potentiellement coûteux, annulable." if length > 500 else ""))
+        self.reference_note.show()
+
     def parameters(self):
         index = self.source.currentIndex()
         source = ({"sequence": self.sequence.toPlainText()}, {"fasta_path": self.fasta.text()},
@@ -101,6 +124,8 @@ class SequencesPage(QWidget):
                    "refresh_cache": self.refresh.isChecked()})[index]
         if index != 2 and self.analysis_label.text().strip():
             source["sequence_label"] = self.analysis_label.text().strip()
+        if index == 2 and self.ncbi_preview:
+            source["expected_ncbi_sha256"] = self.ncbi_preview["sha256"]
         if self.mutant_source.currentIndex() == 1:
             source["mutant_sequence"] = self.mutant.toPlainText()
         elif self.mutant_source.currentIndex() == 2:

@@ -12,8 +12,9 @@ from PySide6.QtWidgets import (
 from .comparison import ComparisonPage
 from .hic import HicPage
 from .sequences import SequencesPage
-from .services import RecentStore
-from .widgets import button, label, page
+from .ncbi import NcbiPage
+from .services import RecentStore, read_rna
+from .widgets import Metrics, button, label, page
 
 
 class MainWindow(QMainWindow):
@@ -72,25 +73,41 @@ class MainWindow(QMainWindow):
         hero_layout.addWidget(label("Explorer une nouvelle hypothèse", "heading"))
         hero_layout.addWidget(label("Importez votre ARN ou vos contacts Hi-C. Retrouvez les résultats, leurs paramètres et les exports dans un même espace."))
         actions = QHBoxLayout()
-        actions.addWidget(button("Nouvelle analyse ARN", lambda: self.navigate(1), True))
-        actions.addWidget(button("Essayer la démo C12A", self.start_demo))
-        actions.addWidget(button("Explorer Hi-C", lambda: self.navigate(3)))
+        actions.addWidget(button("Rechercher NCBI", self.open_ncbi, True))
+        actions.addWidget(button("Importer FASTA", self.import_fasta))
+        actions.addWidget(button("Saisie directe", lambda: self.open_sequences(0)))
         hero_layout.addLayout(actions)
+        secondary_actions = QHBoxLayout()
+        secondary_actions.addWidget(button("Essayer la démo C12A", self.start_demo))
+        secondary_actions.addWidget(button("Explorer Hi-C", lambda: self.navigate(3)))
+        secondary_actions.addStretch()
+        hero_layout.addLayout(secondary_actions)
         home.addWidget(hero)
         home.addWidget(label("Analyses récentes", "subheading"))
         self.recents = QListWidget()
         self.recents.itemDoubleClicked.connect(self.open_recent)
         home.addWidget(self.recents, 1)
         home.addWidget(button("Ouvrir l'analyse sélectionnée", self.open_selected_recent))
-        home.addWidget(label("ARN · NCBI, FASTA, saisie directe, comparaison WT/MUT\nHi-C · contacts équilibrés, boucles, frontières, reconstruction inférée", "badge"))
+        self.latest_rna = None
+        self.latest_title = label("Dernière analyse ARN consultée", "subheading")
+        home.addWidget(self.latest_title)
+        self.latest_metrics = Metrics()
+        home.addWidget(self.latest_metrics)
+        self.latest_button = button("Ouvrir cette analyse ARN", self.open_latest_rna)
+        self.latest_button.setEnabled(False)
+        home.addWidget(self.latest_button)
         home.addWidget(label(f"Résultats enregistrés dans : {self.workspace}"))
         self.sequences = SequencesPage()
         self.comparison = ComparisonPage()
         self.hic = HicPage()
-        for widget in (self.dashboard, self.sequences, self.comparison, self.hic):
+        self.ncbi = NcbiPage()
+        for widget in (self.dashboard, self.sequences, self.comparison, self.hic, self.ncbi):
             self.pages.addWidget(widget)
         self.sequences.requested.connect(lambda parameters: self.start_job("rna", parameters))
         self.hic.requested.connect(lambda parameters: self.start_job("hic", parameters))
+        self.sequences.search_requested.connect(self.open_ncbi)
+        self.ncbi.requested.connect(self.start_ncbi_job)
+        self.ncbi.chosen.connect(self.choose_ncbi_reference)
         self.comparison.failed.connect(self.show_error)
         self.hic.failed.connect(self.show_error)
         body.addWidget(self.pages, 1)
@@ -114,14 +131,15 @@ class MainWindow(QMainWindow):
 
     def navigate(self, index):
         self.pages.setCurrentIndex(index)
-        self.navigation.button(index).setChecked(True)
+        self.navigation.button(1 if index == 4 else index).setChecked(True)
         if index in (2, 3):
             self.current_directory = self.result_directories.get("rna" if index == 2 else "hic")
             self.folder_button.setEnabled(self.current_directory is not None)
 
     def refresh_history(self):
         self.recents.clear()
-        for entry in self.history.load():
+        entries = self.history.load()
+        for entry in entries:
             kind = "ARN" if entry["kind"] == "rna" else "Hi-C"
             item = QListWidgetItem(f"{entry['label']}  ·  {kind}\n{entry.get('summary', 'Résultat enregistré · ouvrir pour consulter')}")
             item.setToolTip(entry["path"])
@@ -133,6 +151,49 @@ class MainWindow(QMainWindow):
             self.recents.addItem(item)
         if self.history.warning:
             self.show_error(self.history.warning)
+        self.latest_rna = None
+        self.latest_button.setEnabled(False)
+        self.latest_metrics.set_values([])
+        self.latest_title.setText("Aucune analyse ARN consultable pour le moment")
+        for entry in entries:
+            if entry["kind"] != "rna":
+                continue
+            try:
+                data, metrics = read_rna(entry["path"])
+            except (ValueError, OSError, KeyError, TypeError):
+                continue
+            self.latest_rna = entry
+            self.latest_title.setText(f"Dernière analyse ARN consultée · {entry['label']}")
+            self.latest_metrics.set_values([
+                ("Bases WT", len(data["reference"]["sequence"])), ("Paires WT", metrics["wt_pairs"]),
+                ("Paires MUT", metrics["mut_pairs"]), ("Perdues", metrics["lost"]),
+                ("Nouvelles", metrics["gained"]), ("|Δ| maximal", f"{metrics['max_abs_delta']:.3f}" if metrics["max_abs_delta"] is not None else None)])
+            self.latest_button.setEnabled(True)
+            break
+
+    def open_sequences(self, source):
+        self.sequences.source.setCurrentIndex(source)
+        self.navigate(1)
+
+    def import_fasta(self):
+        self.open_sequences(1)
+        self.sequences.choose_file(self.sequences.fasta)
+
+    def open_ncbi(self):
+        self.navigate(4)
+        self.ncbi.query.setFocus()
+
+    def start_ncbi_job(self, kind, parameters):
+        self.start_job(kind, {**parameters, "ncbi_email": self.sequences.email.text() or None})
+
+    def choose_ncbi_reference(self, preview):
+        self.sequences.use_ncbi(preview)
+        self.navigate(1)
+        self.statusBar().showMessage("Référence WT sélectionnée · ajoutez un mutant ou lancez l'analyse")
+
+    def open_latest_rna(self):
+        if self.latest_rna:
+            self.open_rna(self.latest_rna["path"])
 
     def start_demo(self):
         self.sequences.fill_demo()
@@ -147,6 +208,7 @@ class MainWindow(QMainWindow):
         self.stdout.clear()
         self.stderr.clear()
         self.cancelled = False
+        self.active_kind = kind
         process = QProcess(self)
         self.process = process
         # Works both from the checkout and from an installed wheel, independent of cwd.
@@ -165,7 +227,9 @@ class MainWindow(QMainWindow):
         self.progress.show()
         self.cancel_button.show()
         self.sequences.setEnabled(False)
-        self.statusBar().showMessage(f"Analyse {kind.upper()} en cours… Vous pouvez parcourir les résultats précédents.")
+        self.ncbi.setEnabled(False)
+        title = {"ncbi_search": "Recherche NCBI", "ncbi_preview": "Aperçu NCBI"}.get(kind, f"Analyse {kind.upper()}")
+        self.statusBar().showMessage(f"{title} en cours… Vous pouvez parcourir les résultats précédents.")
         process.start()
 
     def read_stdout(self):
@@ -179,24 +243,36 @@ class MainWindow(QMainWindow):
     def process_error(self, error):
         if error == QProcess.ProcessError.FailedToStart:
             self.show_error("Impossible de démarrer le processus d'analyse.")
+            if self.active_kind.startswith("ncbi_"):
+                self.ncbi.note.setText("Démarrage impossible. Réessayez.")
             self.finish_process()
 
     def job_finished(self, code, _status):
         self.read_stdout()
         self.read_stderr()
         was_cancelled = self.cancelled
+        kind = self.active_kind
         self.finish_process()
         if was_cancelled:
+            if kind.startswith("ncbi_"):
+                self.ncbi.note.setText("Opération annulée. Vous pouvez relancer la recherche ou l'aperçu.")
             self.statusBar().showMessage("Calcul annulé. Aucun résultat ajouté à l'historique.")
             return
         try:
             result = json.loads(self.stdout.decode("utf-8"))
             if code or "error" in result:
                 raise ValueError(result.get("error", "Le calcul n'a pas abouti."))
-            self.open_entry(result)
-            self.statusBar().showMessage("Analyse terminée · résultats enregistrés")
+            if kind == "ncbi_search":
+                self.ncbi.show_results(result)
+            elif kind == "ncbi_preview":
+                self.ncbi.show_preview(result)
+            else:
+                self.open_entry(result)
+            self.statusBar().showMessage("Opération terminée" if kind.startswith("ncbi_") else "Analyse terminée · résultats enregistrés")
         except (ValueError, OSError, KeyError, TypeError) as exc:
             self.show_error(str(exc) if self.stdout else "Le processus d'analyse s'est arrêté sans résultat.")
+            if kind.startswith("ncbi_"):
+                self.ncbi.note.setText("NCBI indisponible ou réponse invalide. Vérifiez les critères puis réessayez.")
 
     def finish_process(self):
         if self.process:
@@ -205,6 +281,7 @@ class MainWindow(QMainWindow):
         self.progress.hide()
         self.cancel_button.hide()
         self.sequences.setEnabled(True)
+        self.ncbi.setEnabled(True)
 
     def cancel_job(self):
         if self.process:

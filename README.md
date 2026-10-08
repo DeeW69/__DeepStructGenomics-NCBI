@@ -32,11 +32,13 @@ l'analyse Hi-C avancée. Depuis l'accueil, **Essayer la démo C12A** lance une
 comparaison complète hors ligne. Les calculs sont annulables et ne bloquent pas
 la navigation. Les résultats sont enregistrés dans `outputs_gui`.
 
-- Référence NCBI par accession exacte, FASTA ou saisie directe ; mutant facultatif.
+- Recherche NCBI par gène/mots-clés, filtre organisme, résultats paginés et aperçu avant sélection WT.
+- Référence par accession exacte, FASTA ou saisie directe ; mutant facultatif.
 - Vue principale ARN 2D : tiges, boucles, bases A/U/G/C et comparaison WT/MUT.
 - Séquence et contextes structuraux, deltas, sélection synchronisée et 3D schématique à la demande.
 - Hi-C : contacts équilibrés, boucles candidates et reconstruction inférée.
 - Historique local, réouverture des résultats, figures PNG et accès aux rapports.
+- Accueil avec raccourcis d'import et métriques de la dernière analyse ARN consultée.
 
 ![Comparaison ARN dans l'interface desktop](docs/assets/desktop_comparison.png)
 
@@ -173,7 +175,8 @@ la comparaison des reconstructions à des mesures indépendantes.
 - [x] Import ARN NCBI/FASTA/saisie, comparaison et Hi-C reliés au moteur existant.
 - [x] Rendu secondaire ARN avec tiges/boucles, différences de paires et inspection des bases.
 - [ ] v0.5.0 : stabiliser l'interface sur les postes cibles et publier la première GUI.
-- [ ] v0.5.x : recherche NCBI avec aperçu, lots FASTA et paramètres scientifiques avancés dans l'interface.
+- [x] Recherche NCBI avec aperçu, sélection WT et tableau de bord des résultats.
+- [ ] v0.5.x : lots FASTA, filtres NCBI avancés et paramètres scientifiques dans l'interface.
 - [ ] v0.5.x : sélection croisée Hi-C, gestion de projets et comparaison de plusieurs analyses.
 - [ ] v0.6.0 : distribution desktop simplifiée après validation des parcours et du packaging.
 

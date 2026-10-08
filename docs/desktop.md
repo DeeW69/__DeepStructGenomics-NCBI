@@ -36,8 +36,8 @@ réservé aux tests 2D et désactive la vue VTK intégrée.
 ## Parcours ARN
 
 1. Cliquer sur **Essayer la démo C12A**, ou ouvrir **Séquences ARN**.
-2. Choisir une saisie directe, un FASTA mono-entrée ou une accession NCBI
-   nuccore exacte. La recherche par nom de gène n'est pas encore disponible.
+2. Choisir une saisie directe, un FASTA mono-entrée ou une référence NCBI
+   par recherche ou accession nuccore exacte.
 3. Ajouter éventuellement une séquence ou un FASTA mutant, puis lancer l'analyse.
 4. La page **Comparaison** ouvre **Structure secondaire** : WT à gauche, mutant
    à droite, avec des tiges alignées et des boucles. Cliquer sur une base, une
@@ -78,6 +78,40 @@ charge. Les distances du dessin ne représentent aucune mesure physique.
 La géométrie 3D ARN dépend de la longueur. Elle ne montre pas un repliement
 moléculaire ni un déplacement physique causé par la mutation. La vue superposée
 requiert un mutant ; une référence seule reste consultable en 2D et dans le tableau.
+
+## Recherche NCBI et accueil
+
+Depuis l'accueil, **Rechercher NCBI**, **Importer FASTA** et **Saisie directe**
+ouvrent le parcours correspondant. Le tableau de bord reprend la dernière analyse
+ARN consultable : longueur WT, paires WT/MUT, paires perdues/nouvelles et |Δ| maximal.
+Il ignore les résultats devenus introuvables et n'invente aucune valeur sans mutant.
+
+1. Cliquer sur **Rechercher NCBI** ; saisir `BRCA1`, `TP53` ou `HOTAIR`.
+2. Ajouter éventuellement `Homo sapiens` dans **Organisme**. Le filtre **ARN uniquement**
+   est activé par défaut. La recherche libre porte sur tous les champs NCBI ; pour
+   cibler le nom de gène, saisir par exemple `HOTAIR[Gene Name]`.
+3. Parcourir les pages de 20 notices : accession versionnée, organisme, type,
+   longueur et description. La requête traduite par NCBI apparaît au survol du compteur.
+4. Sélectionner une ligne puis **Charger l'aperçu** (ou double-cliquer la ligne).
+   La séquence est téléchargée, validée et mise en cache avec sa provenance.
+5. **Utiliser cette séquence comme WT** remplit le formulaire ARN. Ajouter un mutant
+   si nécessaire, puis lancer explicitement l'analyse.
+
+![Recherche NCBI avec aperçu d'une notice HOTAIR](assets/desktop_ncbi.png)
+
+L'aperçu affiche au plus 5 000 bases ; le cache et l'analyse conservent la séquence
+complète. Les transcrits longs, notamment BRCA1, peuvent demander un calcul Nussinov
+très coûteux : consulter un aperçu ne lance aucune prédiction. `T` est normalisé en
+`U`. Une référence contenant des bases ambiguës est refusée par la validation existante.
+L'empreinte de la séquence prévisualisée est vérifiée avant le calcul ; en cas de
+changement après rafraîchissement du cache, il faut sélectionner à nouveau la référence.
+
+Recherche et téléchargement s'exécutent dans un processus annulable. Une absence
+de résultats, une erreur réseau et une annulation sont distinguées ; on peut réessayer.
+Ces opérations ne créent pas d'analyse dans l'historique. L'e-mail facultatif du
+formulaire NCBI est utilisé pour les appels E-utilities.
+Le client utilise [ESearch puis ESummary](https://www.ncbi.nlm.nih.gov/books/NBK25500/),
+puis EFetch uniquement pour la notice choisie.
 
 ## Parcours Hi-C
 
@@ -122,7 +156,8 @@ analysées. Aucun transfert réseau n'a lieu en dehors des demandes NCBI.
 
 - `gui/services.py` délègue aux pipelines, lit les artefacts et gère l'historique.
 - `gui/worker.py` reçoit la demande sur stdin et renvoie le chemin des résultats.
-- `gui/main_window.py` supervise le processus et les quatre pages.
+- `gui/main_window.py` supervise le processus et les quatre rubriques.
+- `gui/ncbi.py` propose la recherche et l'aperçu dans la rubrique Séquences ARN.
 - `gui/comparison.py`, `gui/hic.py` et `gui/vtk_viewer.py` affichent les résultats.
 - `visualization/secondary_layout.py` et `secondary_diagram.py` dessinent la
   topologie ARN ; aucune nouvelle prédiction n'est exécutée par ces modules.
@@ -135,5 +170,5 @@ d'hébergement n'est nécessaire.
 Les tests couvrent la démo, les erreurs suivies d'une nouvelle analyse, l'annulation,
 la réouverture, les mutants absents/de longueurs différentes et le parcours Hi-C.
 Le rendu OpenGL dépend du poste ; en cas d'indisponibilité, la comparaison 2D
-reste accessible. Recherche NCBI avec aperçu, lots FASTA, prédicteur ViennaRNA
+reste accessible. Lots FASTA, filtres NCBI avancés, prédicteur ViennaRNA
 dans l'interface et gestion de projets multiples sont des étapes ultérieures.

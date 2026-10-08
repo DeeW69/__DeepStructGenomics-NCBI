@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import tempfile
+import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -33,6 +34,71 @@ class NCBIClient:
         self.config = config or NCBIConfig()
         self.cache_dir = Path(cache_dir) if cache_dir is not None else None
         self._session = requests.Session()
+        self._last_call = 0.0
+
+    def search_sequences(self, term: str, *, organism: str = "", rna_only: bool = True,
+                         start: int = 0, page_size: int = 20) -> Dict[str, Any]:
+        """Search nuccore and retrieve one bounded page of document summaries."""
+        term, organism = term.strip(), organism.strip()
+        if not term or len(term) > 1000:
+            raise ValueError("Saisir une recherche NCBI de 1 à 1000 caractères.")
+        if start < 0 or not 1 <= page_size <= 50:
+            raise ValueError("Pagination NCBI invalide.")
+        query = f"({term})"
+        if organism:
+            if any(char in organism for char in '"[]'):
+                raise ValueError("Saisir un nom d'organisme, sans guillemets ni crochets.")
+            query += f' AND "{organism}"[Organism]'
+        if rna_only:
+            properties = ("mrna", "ncrna", "rrna", "trna", "snrna", "snorna", "scrna", "transcribed_rna")
+            query += " AND (" + " OR ".join(f"biomol_{value}[PROP]" for value in properties) + ")"
+
+        def read_json(endpoint, parameters):
+            try:
+                payload = self._call_endpoint(endpoint, parameters).json()
+            except requests.exceptions.JSONDecodeError as exc:
+                raise ValueError("Réponse NCBI illisible. Réessayer la recherche.") from exc
+            if not isinstance(payload, dict) or payload.get("error"):
+                raise ValueError("NCBI n'a pas pu traiter la recherche.")
+            return payload
+
+        payload = read_json("esearch.fcgi", {"db": self.config.database, "term": query,
+                            "retmode": "json", "retstart": start, "retmax": page_size})
+        search = payload.get("esearchresult")
+        if not isinstance(search, dict) or search.get("ERROR"):
+            raise ValueError("Requête NCBI invalide ou non reconnue.")
+        errors = search.get("errorlist") or {}
+        if not isinstance(errors, dict) or errors.get("fieldsnotfound"):
+            raise ValueError("Champ de recherche NCBI non reconnu.")
+        try:
+            total = int(search["count"])
+            ids = search["idlist"]
+            if total < 0 or not isinstance(ids, list) or any(not isinstance(uid, str) or not uid.isdigit() for uid in ids):
+                raise ValueError
+        except (ValueError, KeyError, TypeError) as exc:
+            raise ValueError("Pagination reçue de NCBI invalide.") from exc
+        rows = []
+        if ids:
+            summaries = read_json("esummary.fcgi", {"db": self.config.database, "id": ",".join(ids[:page_size]), "retmode": "json"}).get("result")
+            if not isinstance(summaries, dict):
+                raise ValueError("Métadonnées NCBI indisponibles.")
+            for uid in ids[:page_size]:
+                summary = summaries.get(uid)
+                if not isinstance(summary, dict) or summary.get("error") or not summary.get("accessionversion"):
+                    raise ValueError("Une notice NCBI est incomplète ; relancer la recherche.")
+                try:
+                    length = int(summary["slen"])
+                    if length < 1:
+                        raise ValueError
+                except (ValueError, KeyError, TypeError) as exc:
+                    raise ValueError("Longueur de séquence NCBI invalide.") from exc
+                rows.append({"accession": str(summary["accessionversion"]),
+                             "organism": str(summary.get("organism", "Non renseigné")),
+                             "molecule": str(summary.get("biomol") or summary.get("moltype") or "Non renseigné"),
+                             "length": length, "description": str(summary.get("title", ""))})
+        return {"term": term, "query": query, "translated_query": search.get("querytranslation", query),
+                "total": total, "start": start, "page_size": page_size, "rows": rows,
+                "unmatched_terms": errors.get("phrasesnotfound", [])}
 
     def fetch_sequence(self, accession: str, *, refresh: bool = False) -> SequenceRecord:
         """Fetches a nucleotide sequence (FASTA + metadata) from NCBI."""
@@ -133,6 +199,11 @@ class NCBIClient:
             query["api_key"] = self.config.api_key
 
         url = f"{self.config.base_url}/{endpoint}"
+        # E-utilities permit 3 requests/s without a key (10 with a key).
+        delay = (0.11 if self.config.api_key else 0.35) - (time.monotonic() - self._last_call)
+        if delay > 0:
+            time.sleep(delay)
+        self._last_call = time.monotonic()
         response = self._session.get(url, params=query, timeout=self.config.timeout)
         response.raise_for_status()
         return response

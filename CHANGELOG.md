@@ -2,6 +2,13 @@
 
 ## Non publié — préparation v0.5.0
 
+- Recherche NCBI paginée par gène/mots-clés, organisme et type ARN : accession,
+  description, longueur, aperçu normalisé puis sélection comme WT, sans calcul automatique.
+- Conservation du cache et de la provenance NCBI ; contrôle SHA-256 de la référence
+  prévisualisée avant analyse, erreurs récupérables et opérations réseau annulables.
+- Accueil avec raccourcis NCBI/FASTA/saisie et métriques réelles de la dernière
+  analyse ARN consultable ; tests hors réseau de la recherche et du parcours de sélection.
+
 - Vue ARN principale en tiges/boucles 2D, bases colorées, extrémités 5′/3′ et
   positions communes lorsque les appariements sont compatibles. Comparaison
   des paires conservées (vert), perdues (bleu) et nouvelles (rouge).

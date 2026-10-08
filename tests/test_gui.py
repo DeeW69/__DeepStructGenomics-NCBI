@@ -61,6 +61,44 @@ def test_demo_process_to_comparison_and_recent_reopen(app, window):
     window.open_recent(window.recents.item(0))
     assert window.pages.currentIndex() == 2
     assert len(window.history.load()) == 1
+    assert window.latest_rna is not None and window.latest_button.isEnabled()
+    window.open_latest_rna()
+    assert window.pages.currentIndex() == 2
+
+
+def test_ncbi_search_preview_selection_and_invalidation(app, window, monkeypatch):
+    calls = []
+    monkeypatch.setattr(window, "start_job", lambda kind, params: calls.append((kind, params)))
+    window.open_ncbi()
+    page = window.ncbi
+    page.query.setText("HOTAIR")
+    page.search()
+    assert calls[-1][0] == "ncbi_search" and calls[-1][1]["start"] == 0
+    result = {"term": "HOTAIR", "query": "HOTAIR", "start": 0, "page_size": 20, "total": 21,
+              "rows": [{"accession": "NR_TEST.1", "organism": "Homo sapiens", "molecule": "ncRNA",
+                        "length": 12, "description": "Reference"}]}
+    page.show_results(result)
+    assert page.next.isEnabled() and not page.previous.isEnabled()
+    page.table.selectRow(0)
+    assert page.preview_button.isEnabled() and not page.use.isEnabled()
+    page.fetch_preview()
+    assert calls[-1][0] == "ncbi_preview"
+    preview = {"accession": "NR_TEST.1", "description": "Reference", "sequence": "GGGGAAAACCCC", "sha256": "digest"}
+    page.show_preview({**preview, "accession": "wrong"})
+    assert not page.use.isEnabled()
+    page.show_preview(preview)
+    page.use_sequence()
+    assert window.pages.currentIndex() == 1 and window.sequences.source.currentIndex() == 2
+    assert window.sequences.parameters()["expected_ncbi_sha256"] == "digest"
+    assert window.history.load() == []  # Browsing is not an analysis.
+    window.sequences.source.setCurrentIndex(0)
+    assert window.sequences.reference_note.isHidden()
+    window.sequences.accession.setText("OTHER.1")
+    assert window.sequences.ncbi_preview is None
+    page.search(1)
+    assert calls[-1][1]["start"] == 20 and calls[-1][1]["term"] == "HOTAIR"
+    page.invalidate()
+    assert page.table.rowCount() == 0 and page.preview is None and not page.next.isEnabled()
 
 
 def test_invalid_input_visible_and_retry_possible(app, window):

@@ -5,9 +5,10 @@ import sys
 
 def main():
     try:
-        from .services import run_hic, run_rna
+        from .services import run_hic, run_rna, search_ncbi, preview_ncbi
         request = json.load(sys.stdin)
-        operation = {"rna": run_rna, "hic": run_hic}[request["kind"]]
+        operation = {"rna": run_rna, "hic": run_hic, "ncbi_search": search_ncbi,
+                     "ncbi_preview": preview_ncbi}[request["kind"]]
         result = operation(request["workspace"], request["parameters"])
         print(json.dumps(result, ensure_ascii=True))
         return 0
