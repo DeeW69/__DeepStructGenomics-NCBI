@@ -29,3 +29,15 @@ QTabBar::tab:selected { background: white; color: #127c82; }
 QProgressBar { border: 0; background: #dce9ee; max-height: 5px; }
 QProgressBar::chunk { background: #17888e; }
 QStatusBar { background: #e7eef4; }
+QFrame#stateCard { background: #eef3f8; border: 1px solid #cedbe6; border-radius: 8px; }
+QFrame#stateCard[state="busy"] { background: #edf5fa; border-left: 4px solid #207aaf; }
+QFrame#stateCard[state="success"], QFrame#stateCard[state="conserved"] { background: #e5f3ed; border-left: 4px solid #27805d; }
+QFrame#stateCard[state="error"] { background: #fff0eb; border-left: 4px solid #b94c35; }
+QFrame#stateCard[state="warning"] { background: #fff6e5; border-left: 4px solid #ad7926; }
+QFrame#stateCard[state="lost"] { background: #eaf2fb; border-left: 4px solid #397db7; }
+QFrame#stateCard[state="gained"] { background: #fbecea; border-left: 4px solid #b84c49; }
+QFrame#stateCard[state="substitution"] { background: #f2ecfa; border-left: 4px solid #7d5ab0; }
+QLabel#stateTitle { font-size: 14px; font-weight: 700; }
+QLabel#inspectorDelta { font-size: 20px; font-weight: 700; padding: 6px; }
+QLabel#localSequence { font-family: Consolas, monospace; background: white; padding: 5px; }
+QLineEdit:disabled, QPlainTextEdit:disabled, QSpinBox:disabled, QComboBox:disabled { background: #e9eef3; color: #8091a0; }

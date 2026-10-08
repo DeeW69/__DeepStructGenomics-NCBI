@@ -19,6 +19,14 @@ class StructureFigure(Figure):
         self.rna_style_updates = []
 
     def draw(self, renderer):
+        if hasattr(self, "rna_compact_grid"):
+            # Reserve physical space for legends/titles even in a short desktop pane.
+            height = self.get_figheight() * 72
+            self.rna_compact_grid.update(top=max(.45, 1 - 85 / height), bottom=min(.35, 62 / height))
+            self.legends[0].set_bbox_to_anchor((.5, 1 - 3 / height))
+            self.legends[1].set_bbox_to_anchor((.5, 1 - 25 / height))
+            self.texts[-2].set_y(40 / height)
+            self.texts[-1].set_y(9 / height)
         for axis, update in self.rna_style_updates:
             axis.apply_aspect()
             update(axis)
@@ -42,6 +50,8 @@ def build_structure_diagram(data, *, compact=False):
     fig.rna_layout_note = layouts[2]
     grid = fig.add_gridspec(1, 2, left=.055, right=.97, bottom=.15 if compact else .18,
                            top=.80 if compact else .71, wspace=.17)
+    if compact:
+        fig.rna_compact_grid = grid
     if not compact:
         fig.text(.055, .945, "Structures secondaires ARN", fontsize=21, color=INK, weight="bold")
         fig.text(.055, .902, str(data.get("identifier", "ARN"))[:65] + " · " + layouts[2], fontsize=10, color=MUTED)
@@ -131,7 +141,8 @@ def build_structure_diagram(data, *, compact=False):
         caption = "Comparaison indisponible sans mutant"
     fig.text(.5, .09 if compact else .12, caption, ha="center", fontsize=10, color=INK)
     fig.text(.5, .035 if compact else .075,
-             "Contour sombre : base différente · halo bleu/rouge : diminution/augmentation du score",
+             ("Contour sombre : base différente\nHalo bleu/rouge : diminution/augmentation du score" if compact
+              else "Contour sombre : base différente · halo bleu/rouge : diminution/augmentation du score"),
              ha="center", fontsize=8, color=MUTED)
     return fig
 

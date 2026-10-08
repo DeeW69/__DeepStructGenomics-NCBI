@@ -7,11 +7,14 @@ from PySide6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget,
 )
 from .services import position_details, read_rna
-from .widgets import FigureView, Metrics, button, label
+from .widgets import FigureView, Metrics, StateCard, button, label
+from .inspector import RnaInspector
 
 
 class ComparisonPage(QWidget):
     failed = Signal(str)
+    new_analysis = Signal()
+    search_requested = Signal()
 
     def __init__(self):
         super().__init__()
@@ -23,6 +26,9 @@ class ComparisonPage(QWidget):
         layout.addWidget(label("Comparaison structurelle", "heading"))
         self.subtitle = label("Ouvrez un résultat ou lancez une analyse ARN.", "subheading")
         layout.addWidget(self.subtitle)
+        self.empty = StateCard("Aucune séquence sélectionnée", "Recherchez NCBI, importez un FASTA ou saisissez une séquence.",
+                               actions=[("Rechercher NCBI", self.search_requested.emit), ("Nouvelle analyse", self.new_analysis.emit)])
+        layout.addWidget(self.empty)
         self.metrics = Metrics()
         layout.addWidget(self.metrics)
         self.tabs = QTabWidget()
@@ -51,24 +57,18 @@ class ComparisonPage(QWidget):
         self.tabs.addTab(self.vtk_host, "3D schématique")
         self.splitter = QSplitter()
         self.splitter.addWidget(self.tabs)
-        panel = QWidget()
-        panel.setMinimumWidth(200)
-        panel.setMaximumWidth(270)
-        detail_layout = QVBoxLayout(panel)
-        detail_layout.addWidget(label("Inspecter une position", "subheading"))
+        self.inspector = RnaInspector()
         self.position = QSpinBox()
         self.position.setMinimum(1)
         self.position.valueChanged.connect(self.show_position)
-        detail_layout.addWidget(self.position)
-        self.detail = label("Aucune séquence chargée.")
-        detail_layout.addWidget(self.detail)
-        detail_layout.addStretch()
-        detail_layout.addWidget(label("Scores heuristiques, sans unité. Les paires représentent une prédiction secondaire.", "badge"))
-        self.splitter.addWidget(panel)
+        self.position.setAccessibleName("Position ARN à inspecter, numérotation depuis 1")
+        self.inspector.layout.insertWidget(1, self.position)
+        self.splitter.addWidget(self.inspector)
         self.splitter.setStretchFactor(0, 1)
         self.splitter.setStretchFactor(1, 0)
-        self.splitter.setSizes([850, 230])
+        self.splitter.setSizes([820, 290])
         layout.addWidget(self.splitter, 1)
+        self.splitter.hide()
         actions = QHBoxLayout()
         self.export_button = button("Exporter la structure 2D PNG…", self.export_png)
         self.tabs.currentChanged.connect(lambda index: self.export_button.setText(
@@ -86,16 +86,20 @@ class ComparisonPage(QWidget):
         delta_figure = build_secondary_figure(data, compact=True)
         self.shutdown()
         self.manifest, self.data = Path(manifest), data
+        self.empty.hide()
+        self.splitter.show()
         self.summary = (f"{len(data['reference']['sequence'])} bases · {metrics['wt_pairs']} paires WT"
                         + (f" / {metrics['mut_pairs']} MUT · {metrics['lost']} perdue(s)"
                            f" · |Δ| max {metrics['max_abs_delta']:.3f}" if data.get("mutant") else " · référence seule"))
         self.vtk_button.show()
         self.vtk_button.setEnabled(data.get("mutant") is not None)
         self.vtk_button.setText("Charger la vue 3D schématique" if data.get("mutant") else "Vue superposée : mutant requis")
-        self.subtitle.setText(str(data.get("identifier", "ARN")) + " · Nussinov pondéré · positions depuis 1")
+        self.subtitle.setText(str(data.get("identifier", "ARN")) + (" · WT vs mutant" if data.get("mutant") else " · WT seul")
+                              + " · Nussinov pondéré · positions depuis 1")
         if data.get("mutant") and len(data["mutant"]["sequence"]) != len(data["reference"]["sequence"]):
             self.subtitle.setText(self.subtitle.text() + " · longueurs différentes, sans alignement")
         self.metrics.set_values([
+            ("Bases WT", len(data["reference"]["sequence"])),
             ("Paires WT", metrics["wt_pairs"]), ("Paires MUT", metrics["mut_pairs"]),
             ("Paires perdues", metrics["lost"]), ("Paires gagnées", metrics["gained"]),
             ("Δ absolu maximal", f"{metrics['max_abs_delta']:.3f}" if metrics["max_abs_delta"] is not None else None),
@@ -147,24 +151,7 @@ class ComparisonPage(QWidget):
     def show_position(self, position):
         if not self.data:
             return
-        detail = position_details(self.data, position)
-        lines = [f"Position {position}"]
-        for column, (key, title) in enumerate((("reference", "Référence"), ("mutant", "Mutant"))):
-            entry = detail[key]
-            if entry:
-                pair = f"{position} ↔ {entry['partner']}" if entry["partner"] else "aucune"
-                lines += ["", f"{title} : {entry['base']}", f"Score : {entry['score']:.3f}", f"Paire : {pair}"]
-                lines.append(self.contexts[column][position - 1])
-            else:
-                lines += ["", f"{title} : indisponible"]
-        if detail["delta"] is not None:
-            lines += ["", f"Variation : {detail['delta']:+.3f}"]
-            wt, mut = detail["reference"], detail["mutant"]
-            if wt["partner"] and not mut["partner"]:
-                lines += ["", "La paire prédite à cette position disparaît dans le mutant."]
-            elif mut["partner"] and not wt["partner"]:
-                lines += ["", "Une paire prédite apparaît dans le mutant."]
-        self.detail.setText("\n".join(lines))
+        self.inspector.display(self.data, position, self.contexts)
         from deepstructgenomics.visualization.secondary_diagram import select_position
         select_position(self.figure_view.figure, position)
 

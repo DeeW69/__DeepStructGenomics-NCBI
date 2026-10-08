@@ -7,9 +7,9 @@ from matplotlib.figure import Figure
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QFileDialog, QFormLayout, QHBoxLayout,
-    QLineEdit, QSpinBox, QSplitter, QVBoxLayout, QWidget,
+    QLineEdit, QScrollArea, QSpinBox, QSplitter, QVBoxLayout, QWidget,
 )
-from .widgets import FigureView, Metrics, button, label
+from .widgets import FigureView, Metrics, StateCard, button, label
 
 
 def hic_figure(report, mode="Contacts équilibrés"):
@@ -65,6 +65,7 @@ class HicPage(QWidget):
         layout.addWidget(label("Contacts cis, boucles et domaines candidats · reconstruction inférée", "subheading"))
         split = QSplitter()
         form_widget = QWidget()
+        self.form_widget = form_widget
         form_widget.setMaximumWidth(335)
         form_layout = QVBoxLayout(form_widget)
         self.path = QLineEdit()
@@ -95,7 +96,12 @@ class HicPage(QWidget):
         form_layout.addWidget(self.demo)
         form_layout.addWidget(label("SciPy requis (extra research). FDR 0,05 · 999 permutations · graine 46 · fenêtre 3 bins."))
         form_layout.addStretch()
-        split.addWidget(form_widget)
+        form_scroll = QScrollArea()
+        form_scroll.setWidgetResizable(True)
+        form_scroll.setMaximumWidth(350)
+        form_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        form_scroll.setWidget(form_widget)
+        split.addWidget(form_scroll)
         results = QWidget()
         results_layout = QVBoxLayout(results)
         self.metrics = Metrics()
@@ -105,9 +111,14 @@ class HicPage(QWidget):
         self.mode.currentTextChanged.connect(self.redraw)
         results_layout.addWidget(self.mode)
         self.figure_view = FigureView()
+        self.figure_view.empty.set_state("empty", "Aucun contact analysé", "Importez des contacts TSV et définissez une région, ou remplissez l'exemple synthétique.",
+                                         [("Remplir l'exemple", self.fill_demo)])
         results_layout.addWidget(self.figure_view, 1)
-        self.status = label("Aucune analyse chargée.", "badge")
-        results_layout.addWidget(self.status)
+        self.result_state = StateCard()
+        self.result_state.hide()
+        self.status = self.result_state.body
+        results_layout.addWidget(self.result_state)
+        self.mode.setEnabled(False)
         self.export = button("Exporter la figure PNG…", self.export_png)
         self.export.setEnabled(False)
         results_layout.addWidget(self.export)
@@ -162,8 +173,11 @@ class HicPage(QWidget):
             ("Boucles candidates", sum(row["significant"] for row in loops["tests"]) if loops else None),
             ("Frontières", len(domains["selected_boundaries"]) if domains else None),
         ])
-        self.status.setText("Équilibrage convergé · résultats exploratoires" if report["status"] == "ok"
-                            else "Équilibrage non convergé : aucun test ni reconstruction exécuté.")
+        self.result_state.set_state("success" if report["status"] == "ok" else "warning",
+                                    "Contacts analysés" if report["status"] == "ok" else "Équilibrage non convergé",
+                                    "Résultats exploratoires disponibles dans les vues ci-dessus." if report["status"] == "ok"
+                                    else "Aucun test ni reconstruction exécuté. Vérifiez la région et les contacts fournis.")
+        self.mode.setEnabled(True)
         self.figure_view.set_figure(figure)
         self.export.setEnabled(True)
 

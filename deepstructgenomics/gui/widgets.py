@@ -1,7 +1,7 @@
 """Shared presentation widgets; figures are supplied by the analysis views."""
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget,
+    QFrame, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout, QWidget,
 )
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 
@@ -41,7 +41,9 @@ class Metrics(QWidget):
 
     def set_values(self, values):
         while self.row.count():
-            self.row.takeAt(0).widget().deleteLater()
+            old = self.row.takeAt(0).widget()
+            old.hide()
+            old.deleteLater()
         for title, value in values:
             card = QFrame()
             card.setObjectName("card")
@@ -51,6 +53,59 @@ class Metrics(QWidget):
             self.row.addWidget(card)
 
 
+class StateCard(QFrame):
+    """One vocabulary for empty, busy, success, warning and error states."""
+    def __init__(self, title="", text="", state="empty", actions=()):
+        super().__init__()
+        self.setObjectName("stateCard")
+        self._initialized = False
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(14, 10, 14, 10)
+        layout.setSpacing(6)
+        self.title = label("", "stateTitle")
+        self.body = label("")
+        layout.addWidget(self.title)
+        layout.addWidget(self.body)
+        self.progress = QProgressBar()
+        self.progress.setRange(0, 0)
+        self.progress.setAccessibleName("Opération en cours, progression non mesurée")
+        layout.addWidget(self.progress)
+        self.action_row = QWidget()
+        self.actions = QHBoxLayout(self.action_row)
+        self.actions.setContentsMargins(0, 0, 0, 0)
+        self.controls = []
+        for i in range(2):
+            control = button("", lambda checked=False, index=i: self.trigger(index), i == 0)
+            self.controls.append(control)
+            self.actions.addWidget(control)
+        self.actions.addStretch()
+        layout.addWidget(self.action_row)
+        self.set_state(state, title, text, actions)
+        self._initialized = True
+
+    def trigger(self, index):
+        if index < len(self.callbacks):
+            self.callbacks[index]()
+
+    def set_state(self, state, title, text, actions=()):
+        self.state = state
+        self.setProperty("state", state)
+        self.style().unpolish(self)
+        self.style().polish(self)
+        self.title.setText(title)
+        self.body.setText(text)
+        self.body.setVisible(bool(text))
+        self.progress.setVisible(state == "busy")
+        self.callbacks = [callback for _, callback in actions]
+        self.action_row.setVisible(bool(actions))
+        for i, control in enumerate(self.controls):
+            control.setVisible(i < len(actions))
+            if i < len(actions):
+                control.setText(actions[i][0])
+        if self._initialized:
+            self.show()
+
+
 class FigureView(QWidget):
     def __init__(self):
         super().__init__()
@@ -58,12 +113,15 @@ class FigureView(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.canvas = None
         self.figure = None
-        self.layout.addWidget(label("Les résultats de votre analyse apparaîtront ici."))
+        self.empty = StateCard("Aucune analyse", "Lancez une analyse ou ouvrez un résultat enregistré.")
+        self.layout.addWidget(self.empty)
 
     def set_figure(self, figure):
         old_figure = self.figure
         while self.layout.count():
-            self.layout.takeAt(0).widget().deleteLater()
+            old = self.layout.takeAt(0).widget()
+            old.hide()
+            old.deleteLater()
         if old_figure:
             from matplotlib import pyplot as plt
             plt.close(old_figure)

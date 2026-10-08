@@ -2,6 +2,14 @@
 
 ## Non publié — préparation v0.5.0
 
+- Cartes d'état communes : états vides guidés, opération annulable avec progression
+  indéterminée, succès, erreurs et retour aux paramètres ; formulaires défilants.
+- Inspecteur ARN WT/MUT enrichi : base, score, contexte, partenaire nommé, delta,
+  badges de paire conservée/perdue/nouvelle et substitution, séquence locale surlignée.
+  Un changement de partenaire affiche perte et gain ; une position absente reste indisponible.
+- Synthèse ARN avec longueur WT et marges du diagramme adaptées aux petites fenêtres.
+- Capture README renouvelée et tests des transitions d'état et de l'inspection.
+
 - Recherche NCBI paginée par gène/mots-clés, organisme et type ARN : accession,
   description, longueur, aperçu normalisé puis sélection comme WT, sans calcul automatique.
 - Conservation du cache et de la provenance NCBI ; contrôle SHA-256 de la référence

@@ -2,7 +2,7 @@
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import (QCheckBox, QFormLayout, QHBoxLayout, QHeaderView,
     QLineEdit, QPlainTextEdit, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
-from .widgets import button, label
+from .widgets import StateCard, button, label
 
 
 class NcbiPage(QWidget):
@@ -35,8 +35,9 @@ class NcbiPage(QWidget):
         filters.addWidget(button("Rechercher", self.search, True))
         layout.addLayout(filters)
         self.query.returnPressed.connect(self.search)
-        self.note = label("Saisir une recherche. Aucun appel NCBI avant de cliquer sur Rechercher.")
-        layout.addWidget(self.note)
+        self.state_card = StateCard("Trouvez votre référence WT", "Saisissez un gène, une accession ou des mots-clés, puis cliquez sur Rechercher.")
+        self.note = self.state_card.body
+        layout.addWidget(self.state_card)
         split = QSplitter(Qt.Orientation.Vertical)
         self.table = QTableWidget(0, 5)
         self.table.setHorizontalHeaderLabels(["Accession", "Organisme", "Type", "Longueur", "Description"])
@@ -80,14 +81,14 @@ class NcbiPage(QWidget):
         self.selection_changed()
         self.previous.setEnabled(False)
         self.next.setEnabled(False)
-        self.note.setText("Critères modifiés : relancer la recherche.")
+        self.state_card.set_state("empty", "Recherche à lancer", "Critères modifiés : relancer la recherche.")
 
     def search(self, direction=0):
         if direction and self.result and self.search_parameters:
             parameters = {**self.search_parameters, "start": max(0, self.result["start"] + direction * self.result["page_size"])}
         else:
             if not self.query.text().strip():
-                self.note.setText("Saisir un gène, une accession ou des mots-clés.")
+                self.state_card.set_state("empty", "Aucun terme saisi", "Saisir un gène, une accession ou des mots-clés.")
                 return
             parameters = {"term": self.query.text().strip(), "organism": self.organism.text().strip(),
                           "rna_only": self.rna_only.isChecked(), "start": 0, "page_size": 20}
@@ -96,7 +97,7 @@ class NcbiPage(QWidget):
         self.selection_changed()
         self.previous.setEnabled(False)
         self.next.setEnabled(False)
-        self.note.setText("Recherche NCBI en cours…")
+        self.state_card.set_state("empty", "Recherche demandée", "Les résultats remplaceront la liste précédente.")
         self.requested.emit("ncbi_search", parameters)
 
     def show_results(self, result):
@@ -108,8 +109,9 @@ class NcbiPage(QWidget):
                 item.setToolTip(str(row[key]))
                 self.table.setItem(index, column, item)
         count, start = len(result["rows"]), result["start"]
-        self.note.setText(f"{start + 1}–{start + count} sur {result['total']} notices · {result['term']}" if count
-                          else "Aucun résultat. Essayez un autre terme ou élargissez les filtres.")
+        self.state_card.set_state("success" if count else "empty", "Sélectionnez une notice" if count else "Aucun résultat",
+                                  f"{start + 1}–{start + count} sur {result['total']} notices · {result['term']}" if count
+                                  else "Essayez un autre terme ou élargissez les filtres.")
         self.note.setToolTip(result.get("translated_query", result["query"]))
         if result.get("unmatched_terms"):
             self.note.setText(self.note.text() + " · Termes non reconnus : " + ", ".join(result["unmatched_terms"]))
@@ -128,13 +130,15 @@ class NcbiPage(QWidget):
         self.preview_button.setEnabled(row is not None)
         self.details.setText(f"{row['accession']} · {row['organism']} · {row['length']} nt\n{row['description']}" if row
                              else "Sélectionnez une notice, puis chargez son aperçu.")
+        if row:
+            self.state_card.set_state("empty", "Notice sélectionnée", "Chargez l'aperçu pour valider cette référence avant de l'utiliser.")
 
     def fetch_preview(self):
         row = self.selected()
         if row:
             self.preview = None
             self.use.setEnabled(False)
-            self.note.setText("Chargement de la séquence et de sa provenance…")
+            self.state_card.set_state("empty", "Aperçu demandé", "Chargement de la séquence et de sa provenance…")
             self.requested.emit("ncbi_preview", {"accession": row["accession"]})
 
     def show_preview(self, result):
@@ -147,7 +151,7 @@ class NcbiPage(QWidget):
         excerpt = sequence[:5000]
         self.sequence.setPlainText("\n".join(excerpt[i:i + 80] for i in range(0, len(excerpt), 80)))
         self.details.setText(f"{result['accession']} · {row['organism']} · {len(sequence)} nt\n{result['description']}")
-        self.note.setText("Aperçu validé · T converti en U · la sélection ne lance pas l'analyse."
+        self.state_card.set_state("success", "Aperçu prêt · sélectionnez cette référence WT", "T converti en U · la sélection ne lance pas l'analyse."
                           + (" Affichage limité aux 5 000 premières bases." if len(sequence) > 5000 else "")
                           + (" ARN long : le calcul Nussinov peut être très coûteux et reste annulable." if len(sequence) > 500 else ""))
         self.use.setEnabled(True)

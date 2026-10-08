@@ -99,6 +99,41 @@ def position_details(data, position):
     return result
 
 
+def inspection_details(data, position, radius=4):
+    """Describe positional changes; absence never implies a lost pair or an indel."""
+    detail = position_details(data, position)
+    changes = []
+    wt, mut = detail["reference"], detail["mutant"]
+    for key in ("reference", "mutant"):
+        entry = detail[key]
+        if entry:
+            sequence = data[key]["sequence"]
+            partner = entry["partner"]
+            entry["partner_label"] = f"{sequence[partner - 1]}{partner}" if partner else "—"
+    if wt and mut:
+        def pair_text(entry):
+            return f"{entry['base']}{position} ↔ {entry['partner_label']}"
+        if wt["partner"] is not None and wt["partner"] == mut["partner"]:
+            changes.append(("conserved", "Conservée", f"Positions {position} ↔ {wt['partner']} appariées dans les deux prédictions."))
+        else:
+            if wt["partner"] is not None:
+                changes.append(("lost", "Paire perdue", pair_text(wt) + " disparaît."))
+            if mut["partner"] is not None:
+                changes.append(("gained", "Nouvelle paire", pair_text(mut) + " apparaît."))
+        if wt["base"] != mut["base"]:
+            same_length = len(data["reference"]["sequence"]) == len(data["mutant"]["sequence"])
+            changes.append(("substitution", f"Substitution {wt['base']} → {mut['base']}" if same_length
+                            else f"Différence {wt['base']} → {mut['base']}",
+                            "Comparaison à la même position, sans alignement."))
+    detail["changes"] = changes
+    start = max(1, position - radius)
+    end = min(max(len(data[k]["sequence"]) for k in ("reference", "mutant") if data.get(k)), position + radius)
+    detail["local_start"], detail["local_end"] = start, end
+    detail["local"] = {key: [data[key]["sequence"][i - 1] if data.get(key) and i <= len(data[key]["sequence"]) else "—"
+                             for i in range(start, end + 1)] for key in ("reference", "mutant")}
+    return detail
+
+
 class RecentStore:
     """Only remember result paths; never persist input sequences or credentials."""
     def __init__(self, path):

@@ -60,6 +60,30 @@ sans nouvelle prédiction. Nussinov pondéré ne fournit pas d'énergie MFE.
 Les séquences de longueurs différentes sont comparées par position, sans alignement.
 Une valeur absente apparaît comme indisponible, jamais comme un zéro mesuré.
 
+### Inspecteur ARN
+
+Le panneau à droite reste commun aux quatre onglets. Cliquer une base du dessin,
+une ligne du tableau, un résidu mutant de la vue VTK ou changer le sélecteur de
+position met à jour les cartes **WT** et **MUT** : base, score, contexte structural
+et partenaire avec sa base et sa position (par exemple `G1`). Le delta est `MUT − WT`.
+
+- **Conservée** : les mêmes positions sont appariées dans les deux prédictions.
+- **Paire perdue** : l'appariement WT disparaît ; **Nouvelle paire** : celui du mutant apparaît.
+  Un changement de partenaire affiche les deux badges.
+- **Substitution C → A** : bases différentes à la même position pour des séquences
+  de même longueur. Pour des longueurs différentes, le libellé devient **Différence**,
+  avec un rappel explicite de l'absence d'alignement.
+
+La séquence locale montre jusqu'à quatre bases de chaque côté, avec la position
+choisie surlignée et les bornes affichées. `—` indique une base absente ; aucun
+appariement perdu ou gagné n'est inféré lorsque la position manque dans l'une des
+séquences. Sans mutant, les champs de comparaison restent indisponibles. Les scores
+sont ceux des rapports, sans valeur d'exemple ajoutée à l'affichage.
+
+La synthèse au-dessus des onglets réunit longueur WT, paires WT/MUT, pertes, gains
+et maximum absolu du delta. L'inspecteur défile indépendamment du dessin si la
+fenêtre est petite ; le zoom du diagramme permet d'en lire les bases.
+
 Le dessin 2D est calculé localement depuis les paires imbriquées, sans dépendance
 supplémentaire : segments parallèles pour les tiges, polygones circulaires pour
 les boucles et branches orientées vers l'extérieur aux jonctions. Le contexte
@@ -133,6 +157,17 @@ arbitraires. Le caractère synthétique de l'exemple ne constitue pas une valida
 
 ## Résultats et calculs
 
+Les pages utilisent les mêmes cartes d'état : une invitation avec une action quand
+aucun résultat n'est chargé, une carte de chargement, un succès vert ou une erreur
+avec **Corriger la séquence**, **Corriger les paramètres** ou **Modifier la recherche**.
+**Fermer** masque uniquement le message. Les champs de saisie sont désactivés pendant
+une opération ; les résultats précédents restent consultables.
+
+Le chargement indique l'opération et la source connue (longueur pour une saisie
+directe). Sa barre est **indéterminée** : le moteur ne fournit pas encore de jalons
+ni d'estimation de durée. L'application n'affiche donc aucun pourcentage simulé.
+L'annulation est distincte d'une erreur et permet de revenir aux paramètres.
+
 Les calculs s'exécutent dans un processus Python séparé. L'interface reste
 disponible pour parcourir les résultats précédents ; un seul calcul tourne à la
 fois. **Annuler le calcul** arrête le processus. Les éventuels fichiers partiels
@@ -158,6 +193,7 @@ analysées. Aucun transfert réseau n'a lieu en dehors des demandes NCBI.
 - `gui/worker.py` reçoit la demande sur stdin et renvoie le chemin des résultats.
 - `gui/main_window.py` supervise le processus et les quatre rubriques.
 - `gui/ncbi.py` propose la recherche et l'aperçu dans la rubrique Séquences ARN.
+- `gui/widgets.py` partage les cartes d'état ; `gui/inspector.py` affiche les détails ARN.
 - `gui/comparison.py`, `gui/hic.py` et `gui/vtk_viewer.py` affichent les résultats.
 - `visualization/secondary_layout.py` et `secondary_diagram.py` dessinent la
   topologie ARN ; aucune nouvelle prédiction n'est exécutée par ces modules.
@@ -169,6 +205,10 @@ d'hébergement n'est nécessaire.
 
 Les tests couvrent la démo, les erreurs suivies d'une nouvelle analyse, l'annulation,
 la réouverture, les mutants absents/de longueurs différentes et le parcours Hi-C.
+Ils vérifient aussi les actions de correction, la remise à zéro des badges et les
+changements de partenaires. Avant publication v0.5.0, la recette sur les postes
+cibles doit confirmer qu'un nouvel utilisateur peut suivre les parcours ARN et
+Hi-C, annuler, corriger, exporter et rouvrir une analyse sans consulter ce guide.
 Le rendu OpenGL dépend du poste ; en cas d'indisponibilité, la comparaison 2D
 reste accessible. Lots FASTA, filtres NCBI avancés, prédicteur ViennaRNA
 dans l'interface et gestion de projets multiples sont des étapes ultérieures.

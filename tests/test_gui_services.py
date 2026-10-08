@@ -7,6 +7,7 @@ import sys
 import pytest
 
 from deepstructgenomics.gui.services import RecentStore, position_details, read_rna, run_rna
+from deepstructgenomics.gui.services import inspection_details
 
 
 def test_desktop_rna_results_and_position_conventions(tmp_path):
@@ -35,6 +36,27 @@ def test_longer_mutant_does_not_invent_reference_base(tmp_path):
     detail = position_details(data, 13)
     assert detail["reference"] is None and detail["delta"] is None
     assert detail["mutant"]["base"] == "A"
+
+
+def test_inspector_partner_changes_and_local_coordinates():
+    data = {"reference": {"sequence": "GACCC", "scores": [.8] * 5, "base_pairs": [[0, 4]]},
+            "mutant": {"sequence": "UACCA", "scores": [.2] * 5, "base_pairs": [[0, 3]]}}
+    detail = inspection_details(data, 1)
+    assert detail["reference"]["partner_label"] == "C5"
+    assert detail["mutant"]["partner_label"] == "C4"
+    assert [row[0] for row in detail["changes"]] == ["lost", "gained", "substitution"]
+    assert (detail["local_start"], detail["local_end"]) == (1, 5)
+    data["mutant"]["base_pairs"] = [[0, 4]]
+    assert inspection_details(data, 1)["changes"][0][0] == "conserved"
+    assert inspection_details(data, 2)["changes"] == []
+    data["mutant"]["sequence"] += "A"
+    data["mutant"]["scores"].append(.2)
+    assert inspection_details(data, 1)["changes"][1][1] == "Différence G → U"
+    missing = inspection_details(data, 6)
+    assert missing["changes"] == [] and missing["delta"] is None
+    assert missing["local"]["reference"][-1] == "—"
+    del data["mutant"]
+    assert inspection_details(data, 1)["changes"] == []
 
 
 def test_recent_store_recovers_and_deduplicates(tmp_path):

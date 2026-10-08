@@ -53,7 +53,13 @@ def test_demo_process_to_comparison_and_recent_reopen(app, window):
     assert window.comparison.tabs.tabText(0) == "Structure secondaire"
     assert window.comparison.table.item(4, 6).text() == "Boucle terminale"
     window.comparison.position.setValue(12)
-    assert "C" in window.comparison.detail.text() and "12 ↔ 1" in window.comparison.detail.text()
+    inspector = window.comparison.inspector
+    assert inspector.fields["reference"]["base"].text() == "C"
+    assert inspector.fields["reference"]["partner"].text() == "G1"
+    assert inspector.fields["mutant"]["partner"].text() == "—"
+    assert inspector.badges[0].title.text() == "Paire perdue"
+    assert inspector.badges[1].title.text() == "Substitution C → A"
+    assert inspector.delta.text() == "Δ  -0.700"
     figure = window.comparison.figure_view.figure
     for axis, coordinates in figure.rna_coordinates.items():
         assert figure.rna_selections[axis].get_offsets()[0].tolist() == coordinates[11].tolist()
@@ -87,6 +93,7 @@ def test_ncbi_search_preview_selection_and_invalidation(app, window, monkeypatch
     page.show_preview({**preview, "accession": "wrong"})
     assert not page.use.isEnabled()
     page.show_preview(preview)
+    assert page.state_card.state == "success"
     page.use_sequence()
     assert window.pages.currentIndex() == 1 and window.sequences.source.currentIndex() == 2
     assert window.sequences.parameters()["expected_ncbi_sha256"] == "digest"
@@ -99,17 +106,64 @@ def test_ncbi_search_preview_selection_and_invalidation(app, window, monkeypatch
     assert calls[-1][1]["start"] == 20 and calls[-1][1]["term"] == "HOTAIR"
     page.invalidate()
     assert page.table.rowCount() == 0 and page.preview is None and not page.next.isEnabled()
+    assert page.state_card.state == "empty"
+
+
+def test_empty_states_guide_to_inputs_and_inspector_resets(app, window, tmp_path):
+    assert not window.empty_history.isHidden()
+    assert window.comparison.splitter.isHidden()
+    assert not window.comparison.export_button.isEnabled()
+    assert not window.hic.mode.isEnabled()
+    window.comparison.empty.controls[0].click()
+    assert window.pages.currentIndex() == 4
+    window.comparison.empty.controls[1].click()
+    assert window.pages.currentIndex() == 1
+    window.sequences.sequence.setPlainText("ACGU")
+    assert window.sequences.empty.isHidden()
+    entry = run_rna(tmp_path, {"sequence": "GGGGAAAACCCC", "mutant_sequence": "GGGGAAAACCCA"})
+    window.open_entry(entry)
+    window.comparison.position.setValue(12)
+    inspector = window.comparison.inspector
+    assert not inspector.badges[0].isHidden()
+    entry = run_rna(tmp_path, {"sequence": "GGGGAAAACCCC"})
+    window.open_entry(entry)
+    assert all(badge.isHidden() for badge in inspector.badges)
+    assert inspector.delta.text() == "Δ indisponible"
+    assert inspector.fields["mutant"]["base"].text() == "Indisponible"
+    assert window.comparison.empty.isHidden()
+    assert window.empty_history.isHidden()
+
+
+def test_ncbi_errors_use_recoverable_states(app, window):
+    # Exercise worker completion routing without making a network call.
+    import json
+    window.active_kind = "ncbi_search"
+    window.stdout.extend(json.dumps({"error": "NCBI temporairement indisponible"}).encode())
+    window.job_finished(1, QProcess.ExitStatus.NormalExit)
+    assert window.notice.state == "error" and window.ncbi.state_card.state == "error"
+    window.notice.controls[0].click()
+    assert window.pages.currentIndex() == 4 and window.ncbi.isEnabled()
+    assert window.history.load() == []
 
 
 def test_invalid_input_visible_and_retry_possible(app, window):
     window.start_job("rna", {"sequence": "ACG!"})
+    assert window.operation.state == "busy" and not window.operation.isHidden()
+    assert not window.hic.form_widget.isEnabled()
     wait_for(app, lambda: window.process is None)
     assert window.message.text()
     assert window.sequences.isEnabled()
     assert window.history.load() == []
+    assert window.notice.state == "error" and window.operation.isHidden()
+    assert window.notice.controls[0].text() == "Corriger la séquence"
+    window.notice.controls[0].click()
+    assert window.pages.currentIndex() == 1
+    window.notice.controls[1].click()
+    assert window.notice.isHidden()
     window.start_demo()
     wait_for(app, lambda: window.process is None)
     assert window.pages.currentIndex() == 2
+    assert window.notice.state == "success"
 
 
 def test_cancel_preserves_previous_result_and_close_waits(app, window):
@@ -124,6 +178,8 @@ def test_cancel_preserves_previous_result_and_close_waits(app, window):
     assert window.comparison.manifest == previous
     assert len(window.history.load()) == 1
     assert window.sequences.isEnabled()
+    assert window.notice.state == "warning" and window.operation.isHidden()
+    assert window.hic.form_widget.isEnabled()
 
 
 def test_missing_result_and_no_mutant(app, window, tmp_path):

@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout,
     QLineEdit, QPlainTextEdit, QStackedWidget, QVBoxLayout, QWidget,
 )
-from .widgets import button, label
+from .widgets import StateCard, button, label
 
 
 class SequencesPage(QWidget):
@@ -19,6 +19,9 @@ class SequencesPage(QWidget):
         layout.setSpacing(14)
         layout.addWidget(label("Nouvelle analyse ARN", "heading"))
         layout.addWidget(label("Choisissez la référence, puis ajoutez un mutant pour comparer les appariements.", "subheading"))
+        self.empty = StateCard("Choisissez votre référence WT", "Saisissez une séquence ci-dessous, importez un FASTA ou recherchez NCBI.",
+                               actions=[("Rechercher NCBI", self.search_requested.emit)])
+        layout.addWidget(self.empty)
         self.source = QComboBox()
         self.source.addItems(["Saisie directe", "Fichier FASTA", "Accession NCBI"])
         layout.addWidget(self.source)
@@ -85,6 +88,15 @@ class SequencesPage(QWidget):
         actions.addWidget(button("Lancer l'analyse", self.submit, True))
         layout.addLayout(actions)
         layout.addStretch()
+        self.source.currentIndexChanged.connect(self.update_empty)
+        self.sequence.textChanged.connect(self.update_empty)
+        self.fasta.textChanged.connect(self.update_empty)
+        self.accession.textChanged.connect(self.update_empty)
+        self.update_empty()
+
+    def update_empty(self, *_):
+        value = (self.sequence.toPlainText(), self.fasta.text(), self.accession.text())[self.source.currentIndex()]
+        self.empty.setVisible(not value.strip())
 
     def update_mutant(self, index):
         self.mutant.setVisible(index == 1)

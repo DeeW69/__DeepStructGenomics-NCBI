@@ -7,14 +7,14 @@ from PySide6.QtCore import QProcess, QProcessEnvironment, Qt, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QButtonGroup, QFileDialog, QFrame, QHBoxLayout, QListWidget, QListWidgetItem,
-    QMainWindow, QProgressBar, QPushButton, QStackedWidget, QVBoxLayout, QWidget,
+    QMainWindow, QPushButton, QScrollArea, QStackedWidget, QVBoxLayout, QWidget,
 )
 from .comparison import ComparisonPage
 from .hic import HicPage
 from .sequences import SequencesPage
 from .ncbi import NcbiPage
 from .services import RecentStore, read_rna
-from .widgets import Metrics, button, label, page
+from .widgets import Metrics, StateCard, button, label, page
 
 
 class MainWindow(QMainWindow):
@@ -87,7 +87,11 @@ class MainWindow(QMainWindow):
         self.recents = QListWidget()
         self.recents.itemDoubleClicked.connect(self.open_recent)
         home.addWidget(self.recents, 1)
-        home.addWidget(button("Ouvrir l'analyse sélectionnée", self.open_selected_recent))
+        self.recent_button = button("Ouvrir l'analyse sélectionnée", self.open_selected_recent)
+        home.addWidget(self.recent_button)
+        self.empty_history = StateCard("Aucune analyse récente", "Commencez par une séquence ou essayez la démo hors ligne.",
+                                       actions=[("Essayer la démo C12A", self.start_demo)])
+        home.addWidget(self.empty_history)
         self.latest_rna = None
         self.latest_title = label("Dernière analyse ARN consultée", "subheading")
         home.addWidget(self.latest_title)
@@ -101,27 +105,34 @@ class MainWindow(QMainWindow):
         self.comparison = ComparisonPage()
         self.hic = HicPage()
         self.ncbi = NcbiPage()
-        for widget in (self.dashboard, self.sequences, self.comparison, self.hic, self.ncbi):
-            self.pages.addWidget(widget)
+        for index, widget in enumerate((self.dashboard, self.sequences, self.comparison, self.hic, self.ncbi)):
+            if index in (0, 1):
+                scroll = QScrollArea()
+                scroll.setWidgetResizable(True)
+                scroll.setFrameShape(QFrame.Shape.NoFrame)
+                scroll.setWidget(widget)
+                self.pages.addWidget(scroll)
+            else:
+                self.pages.addWidget(widget)
         self.sequences.requested.connect(lambda parameters: self.start_job("rna", parameters))
         self.hic.requested.connect(lambda parameters: self.start_job("hic", parameters))
         self.sequences.search_requested.connect(self.open_ncbi)
+        self.comparison.search_requested.connect(self.open_ncbi)
+        self.comparison.new_analysis.connect(lambda: self.open_sequences(0))
         self.ncbi.requested.connect(self.start_ncbi_job)
         self.ncbi.chosen.connect(self.choose_ncbi_reference)
         self.comparison.failed.connect(self.show_error)
         self.hic.failed.connect(self.show_error)
         body.addWidget(self.pages, 1)
-        self.message = label("")
-        self.message.setContentsMargins(26, 4, 26, 4)
-        self.message.hide()
-        body.addWidget(self.message)
-        self.progress = QProgressBar()
-        self.progress.setRange(0, 0)
-        self.progress.hide()
-        body.addWidget(self.progress)
-        self.cancel_button = button("Annuler le calcul", self.cancel_job)
-        self.cancel_button.hide()
-        body.addWidget(self.cancel_button)
+        self.notice = StateCard()
+        self.notice.hide()
+        self.message = self.notice.body
+        body.addWidget(self.notice)
+        self.operation = StateCard()
+        self.operation.hide()
+        self.progress = self.operation.progress
+        self.cancel_button = self.operation.controls[0]
+        body.addWidget(self.operation)
         row.addLayout(body, 1)
         self.setCentralWidget(central)
         self.navigation.idClicked.connect(self.navigate)
@@ -145,10 +156,9 @@ class MainWindow(QMainWindow):
             item.setToolTip(entry["path"])
             item.setData(Qt.ItemDataRole.UserRole, entry)
             self.recents.addItem(item)
-        if not self.recents.count():
-            item = QListWidgetItem("Aucune analyse récente. Lancez la démo ou ouvrez un résultat existant.")
-            item.setFlags(Qt.ItemFlag.NoItemFlags)
-            self.recents.addItem(item)
+        self.empty_history.setVisible(not entries)
+        self.recents.setVisible(bool(entries))
+        self.recent_button.setVisible(bool(entries))
         if self.history.warning:
             self.show_error(self.history.warning)
         self.latest_rna = None
@@ -190,6 +200,8 @@ class MainWindow(QMainWindow):
         self.sequences.use_ncbi(preview)
         self.navigate(1)
         self.statusBar().showMessage("Référence WT sélectionnée · ajoutez un mutant ou lancez l'analyse")
+        self.notice.set_state("success", "Référence WT sélectionnée", f"{preview['accession']} · {len(preview['sequence'])} nt. Ajoutez un mutant ou lancez l'analyse.",
+                              [("Fermer", self.notice.hide)])
 
     def open_latest_rna(self):
         if self.latest_rna:
@@ -204,7 +216,7 @@ class MainWindow(QMainWindow):
         if self.process is not None:
             self.show_error("Un calcul est déjà en cours. Attendez sa fin ou annulez-le.")
             return
-        self.message.hide()
+        self.notice.hide()
         self.stdout.clear()
         self.stderr.clear()
         self.cancelled = False
@@ -224,11 +236,23 @@ class MainWindow(QMainWindow):
         process.started.connect(lambda: (process.write(payload), process.closeWriteChannel()))
         process.finished.connect(self.job_finished)
         process.errorOccurred.connect(self.process_error)
-        self.progress.show()
-        self.cancel_button.show()
         self.sequences.setEnabled(False)
         self.ncbi.setEnabled(False)
+        self.hic.form_widget.setEnabled(False)
         title = {"ncbi_search": "Recherche NCBI", "ncbi_preview": "Aperçu NCBI"}.get(kind, f"Analyse {kind.upper()}")
+        if kind == "rna":
+            source = parameters.get("accession") or parameters.get("sequence_label") or parameters.get("fasta_path") or "Séquence saisie"
+            length = len("".join(parameters.get("sequence", "").split()))
+            context = f"{source}" + (f" · {length} nt" if length else "")
+            detail = "Validation, prédiction et export des résultats."
+        elif kind == "hic":
+            context = f"{parameters.get('chromosome', '')} · {parameters.get('start', 0)}–{parameters.get('end', 0)} bp"
+            detail = "Analyse des contacts et export des résultats."
+        else:
+            context = parameters.get("term") or parameters.get("accession", "NCBI")
+            detail = "Interrogation du service NCBI." if kind == "ncbi_search" else "Téléchargement et validation de la séquence."
+        self.operation.set_state("busy", title + " en cours", f"{context}\n{detail} Durée restante non estimée.",
+                                 [("Annuler", self.cancel_job)])
         self.statusBar().showMessage(f"{title} en cours… Vous pouvez parcourir les résultats précédents.")
         process.start()
 
@@ -242,9 +266,9 @@ class MainWindow(QMainWindow):
 
     def process_error(self, error):
         if error == QProcess.ProcessError.FailedToStart:
-            self.show_error("Impossible de démarrer le processus d'analyse.")
+            self.show_job_error("Impossible de démarrer le processus d'analyse.", self.active_kind)
             if self.active_kind.startswith("ncbi_"):
-                self.ncbi.note.setText("Démarrage impossible. Réessayez.")
+                self.ncbi.state_card.set_state("error", "Démarrage impossible", "Réessayez la recherche ou l'aperçu.")
             self.finish_process()
 
     def job_finished(self, code, _status):
@@ -255,8 +279,10 @@ class MainWindow(QMainWindow):
         self.finish_process()
         if was_cancelled:
             if kind.startswith("ncbi_"):
-                self.ncbi.note.setText("Opération annulée. Vous pouvez relancer la recherche ou l'aperçu.")
+                self.ncbi.state_card.set_state("warning", "Opération annulée", "Vous pouvez relancer la recherche ou l'aperçu.")
             self.statusBar().showMessage("Calcul annulé. Aucun résultat ajouté à l'historique.")
+            self.notice.set_state("warning", "Opération annulée", "Aucun résultat ajouté à l'historique. Les résultats précédents restent consultables.",
+                                  [("Revenir aux paramètres", lambda: self.navigate(self.source_page(kind))), ("Fermer", self.notice.hide)])
             return
         try:
             result = json.loads(self.stdout.decode("utf-8"))
@@ -268,20 +294,23 @@ class MainWindow(QMainWindow):
                 self.ncbi.show_preview(result)
             else:
                 self.open_entry(result)
+                if self.notice.state != "error" or self.notice.isHidden():
+                    self.notice.set_state("success", "Analyse terminée", "Résultats enregistrés. Explorez les vues ou exportez une figure.",
+                                          [("Fermer", self.notice.hide)])
             self.statusBar().showMessage("Opération terminée" if kind.startswith("ncbi_") else "Analyse terminée · résultats enregistrés")
         except (ValueError, OSError, KeyError, TypeError) as exc:
-            self.show_error(str(exc) if self.stdout else "Le processus d'analyse s'est arrêté sans résultat.")
+            self.show_job_error(str(exc) if self.stdout else "Le processus d'analyse s'est arrêté sans résultat.", kind)
             if kind.startswith("ncbi_"):
-                self.ncbi.note.setText("NCBI indisponible ou réponse invalide. Vérifiez les critères puis réessayez.")
+                self.ncbi.state_card.set_state("error", "Aucun résultat utilisable", "Consultez l'erreur ci-dessous, puis réessayez.")
 
     def finish_process(self):
         if self.process:
             self.process.deleteLater()
             self.process = None
-        self.progress.hide()
-        self.cancel_button.hide()
+        self.operation.hide()
         self.sequences.setEnabled(True)
         self.ncbi.setEnabled(True)
+        self.hic.form_widget.setEnabled(True)
 
     def cancel_job(self):
         if self.process:
@@ -328,7 +357,7 @@ class MainWindow(QMainWindow):
         self.current_directory = Path(entry["directory"])
         self.result_directories[entry["kind"]] = self.current_directory
         self.folder_button.setEnabled(True)
-        self.message.hide()
+        self.notice.hide()
         try:
             self.history.add(entry)
         except OSError:
@@ -353,10 +382,19 @@ class MainWindow(QMainWindow):
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(self.current_directory)))
 
     def show_error(self, text):
-        self.message.setText(text)
-        self.message.setStyleSheet("color: #9c3428; background: #fff0e9; padding: 10px;")
-        self.message.show()
+        self.notice.set_state("error", "Action non terminée", text, [("Fermer", self.notice.hide)])
         self.statusBar().showMessage("Action non terminée · voir le message")
+
+    @staticmethod
+    def source_page(kind):
+        return 4 if kind.startswith("ncbi_") else 3 if kind == "hic" else 1
+
+    def show_job_error(self, text, kind):
+        title = "Recherche interrompue" if kind.startswith("ncbi_") else "Analyse interrompue"
+        action = "Modifier la recherche" if kind == "ncbi_search" else "Choisir une autre notice" if kind == "ncbi_preview" else "Corriger la séquence" if kind == "rna" else "Corriger les paramètres"
+        self.notice.set_state("error", title, text,
+                              [(action, lambda: self.navigate(self.source_page(kind))), ("Fermer", self.notice.hide)])
+        self.statusBar().showMessage(title + " · corrigez les paramètres puis relancez")
 
     def closeEvent(self, event):
         if self.process:
