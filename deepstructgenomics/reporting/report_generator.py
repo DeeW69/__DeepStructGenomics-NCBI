@@ -86,8 +86,8 @@ def export_report(result: "PipelineResult", output_dir: Path) -> ReportPaths:
     export_hotspots_csv(
         hotspots,
         csv_path,
-        reference_sequence=result.structure.sequence,
-        mutant_sequence=result.mutant_sequence,
+        reference_sequence=result.alignment.aligned_reference if result.alignment else result.structure.sequence,
+        mutant_sequence=result.alignment.aligned_mutant if result.alignment else result.mutant_sequence,
     )
     return ReportPaths(json_path=json_path, markdown_path=markdown_path, csv_path=csv_path)
 
@@ -115,7 +115,11 @@ def _build_payload(result: "PipelineResult") -> Dict[str, Any]:
             "substitutions": result.variant_result.substitutions,
             "structure_delta_score": result.variant_result.structure_delta_score,
             "commentary": result.variant_result.commentary,
+            "coordinate_system": result.variant_result.coordinate_system,
         }
+    if result.alignment:
+        payload["alignment"] = result.alignment.to_dict()
+    payload["alignment_run"] = result.alignment_run
     if result.impact_summary is not None:
         payload["impact_summary"] = result.impact_summary
     return payload
@@ -154,12 +158,14 @@ def _render_markdown(payload: Dict[str, Any]) -> str:
         lines.append("## Impact des variants")
         lines.append("")
         lines.append(
-            f"- Nombre de substitutions : {var['total_differences']}\n"
+            f"- Nombre de bases différentes (substitutions et indels) : {var['total_differences']}\n"
             f"- Score delta structure : {var['structure_delta_score']:.2f}\n"
             f"- Interpretation : {var['commentary']}"
         )
         if var["substitutions"]:
             lines.append("")
+            if payload.get("alignment"):
+                lines.append("Positions ci-dessous : colonnes d'alignement depuis 1 ; positions WT/MUT dans le JSON.")
             lines.append("| Position (1-based) | Reference | Mutant |")
             lines.append("|----------|-----------|--------|")
             for sub in var["substitutions"][:50]:
@@ -171,6 +177,22 @@ def _render_markdown(payload: Dict[str, Any]) -> str:
 
     if "impact_summary" in payload:
         lines.extend(_render_impact_summary(payload["impact_summary"]))
+
+    if payload.get("alignment"):
+        alignment = payload["alignment"]
+        lines += ["## Alignement WT/MUT", "", f"Identité (matches / toutes les colonnes, gaps inclus) : {alignment['identity']:.2%}",
+                  f"Paramètres : {alignment['parameters']} · CIGAR : {alignment['cigar']}",
+                  *alignment["warnings"], ""]
+        if len(alignment["aligned_reference"]) <= 120:
+            lines += ["```text", alignment["aligned_reference"], alignment["aligned_mutant"], "```", ""]
+    run = payload.get("alignment_run")
+    if run:
+        matrix, config = run["matrix"], run["configuration"]
+        lines += [f"Alignement : {run['status']} · WT {matrix['wt_length']} nt / MUT {matrix['mut_length']} nt.",
+                  f"Matrice théorique WT × MUT : {matrix['cells']:,} cellules ; limite : {config['max_cells']:,} ; longueur max : {config['max_length']:,} nt.",
+                  f"Scoring : match {config['match_score']:+g}, mismatch {config['mismatch_score']:+g}, ouverture {config['gap_open_score']:+g}, extension {config['gap_extend_score']:+g}.", ""]
+        if run["status"] in ("disabled", "overflow_positional"):
+            lines += ["Alignement non calculé : comparaison par position brute. Les insertions et délétions peuvent décaler les correspondances.", run.get("reason", ""), ""]
 
     lines.append("## Metadonnees")
     lines.append("")
@@ -185,6 +207,9 @@ def _render_impact_summary(summary: Dict[str, Any]) -> list[str]:
     """Explain positional score changes without treating them as measured effects."""
 
     lines = ["## Résumé des variations par position", ""]
+    if summary.get("coordinate_system") == "alignment_column_1based":
+        lines += ["Positions = colonnes d'alignement (depuis 1). Aucun delta n'est calculé sur un gap. "
+                  "Les positions du CSV hotspots utilisent aussi ces colonnes.", ""]
     note = summary.get("note")
     if note == "mutant not provided":
         return lines + ["Comparaison indisponible : aucune séquence mutante fournie.", ""]

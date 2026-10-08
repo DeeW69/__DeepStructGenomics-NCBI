@@ -1,8 +1,20 @@
 # Espace d'analyse desktop
 
-Cette première interface prépare **v0.5.0** sur `main`. La dernière release
+Cette première interface prépare **v0.5.0-rc1** (`0.5.0rc1`) sur `main`. La dernière release
 reste v0.4.6. Elle utilise PySide6/Qt et appelle les fonctions scientifiques
 existantes ; les viewers et commandes CLI restent disponibles.
+
+Dans **Séquences → Paramètres avancés**, les profils **Standard 4 M**, **Étendu
+25 M**, **Très étendu 50 M** et **Personnalisé** règlent l'alignement de la tâche
+courante. Le panneau distingue limite maximale et matrice WT × MUT. En cas de
+dépassement, choisir explicitement une comparaison positionnelle ou modifier la
+limite, puis relancer. Aucun relèvement automatique n'est effectué.
+
+Les valeurs initiales suivent `.env < environnement < CLI` ; les choix GUI ont
+priorité pour cette analyse. **Comparaison → Paramètres utilisés** affiche ensuite
+la configuration enregistrée, indépendante des réglages actuels. Le tableau
+WT/MUT est virtualisé pour éviter des milliers d'objets Qt. Voir le
+[guide de configuration et de benchmark](configuration.md).
 
 ## Installation et lancement
 
@@ -57,32 +69,40 @@ réservé aux tests 2D et désactive la vue VTK intégrée.
 La démo synthétique contient 12 bases : WT 4 paires, mutant 3, paire 1–12 perdue,
 C12A, Δ maximal absolu 0,700. Le graphique reprend les résultats exportés,
 sans nouvelle prédiction. Nussinov pondéré ne fournit pas d'énergie MFE.
-Les séquences de longueurs différentes sont comparées par position, sans alignement.
+L'alignement global WT/MUT est activé par défaut, y compris pour les longueurs différentes.
+La case **Aligner WT/MUT** permet de choisir explicitement le mode positionnel.
 Une valeur absente apparaît comme indisponible, jamais comme un zéro mesuré.
 
 ### Inspecteur ARN
 
 Le panneau à droite reste commun aux quatre onglets. Cliquer une base du dessin,
 une ligne du tableau, un résidu mutant de la vue VTK ou changer le sélecteur de
-position met à jour les cartes **WT** et **MUT** : base, score, contexte structural
+colonne met à jour les cartes **WT** et **MUT** : position native, base, score, contexte structural
 et partenaire avec sa base et sa position (par exemple `G1`). Le delta est `MUT − WT`.
 
-- **Conservée** : les mêmes positions sont appariées dans les deux prédictions.
+- **Conservée** : les positions mises en correspondance sont appariées dans les deux prédictions.
 - **Paire perdue** : l'appariement WT disparaît ; **Nouvelle paire** : celui du mutant apparaît.
   Un changement de partenaire affiche les deux badges.
-- **Substitution C → A** : bases différentes à la même position pour des séquences
-  de même longueur. Pour des longueurs différentes, le libellé devient **Différence**,
-  avec un rappel explicite de l'absence d'alignement.
+- **Insertion / Délétion** : base sans homologue. Une paire impliquant un gap est
+  explicitement décrite comme supprimée avec la base ou nouvelle avec insertion.
+- **Substitution C → A** : bases différentes mises en correspondance. En fallback
+  positionnel de longueurs différentes, le libellé reste **Différence**, sans alignement.
 
-La séquence locale montre jusqu'à quatre bases de chaque côté, avec la position
-choisie surlignée et les bornes affichées. `—` indique une base absente ; aucun
-appariement perdu ou gagné n'est inféré lorsque la position manque dans l'une des
-séquences. Sans mutant, les champs de comparaison restent indisponibles. Les scores
+La séquence locale montre jusqu'à quatre colonnes de chaque côté, avec la colonne
+choisie surlignée et les bornes affichées. `-` représente un gap d'alignement ; aucun
+score ni delta n'y est inventé. `—` reste utilisé pour les positions indisponibles
+en fallback. Sans mutant, les champs de comparaison restent indisponibles. Les scores
 sont ceux des rapports, sans valeur d'exemple ajoutée à l'affichage.
 
 La synthèse au-dessus des onglets réunit longueur WT, paires WT/MUT, pertes, gains
 et maximum absolu du delta. L'inspecteur défile indépendamment du dessin si la
 fenêtre est petite ; le zoom du diagramme permet d'en lire les bases.
+
+L'onglet **Alignement WT/MUT** remplace **Séquence** quand l'alignement existe. Il
+présente une ligne par colonne, les deux positions natives, l'opération et les
+scores. La sélection du dessin suit l'homologue et entoure uniquement la base
+existante sur un gap. Les paramètres, limites, avertissements d'ambiguïté et
+conventions d'export sont détaillés dans le [guide d'alignement](alignment.md).
 
 Le dessin 2D est calculé localement depuis les paires imbriquées, sans dépendance
 supplémentaire : segments parallèles pour les tiges, polygones circulaires pour
@@ -91,10 +111,12 @@ de chaque base est dérivé de sa propre structure (tige, boucle terminale/inter
 renflement, jonction ou région non appariée). Voir les
 [définitions des boucles](https://www.tbi.univie.ac.at/RNA/ViennaRNA/doc/html/eval.html).
 
-Pour deux ARN de même longueur, les positions sont partagées lorsque l'union des
+Pour deux ARN sans gap, les positions sont partagées lorsque l'union des
 paires n'introduit ni partenaires concurrents ni croisements. Chaque panneau
 trace uniquement **ses propres paires**, même si les positions sont communes.
 Sinon, chaque structure reçoit sa disposition ; le sous-titre le précise.
+Avec un indel, les dispositions restent propres à chaque structure, tandis que
+les couleurs et la sélection utilisent l'alignement.
 L'intersection des paires est une comparaison des deux prédictions, pas une
 structure consensus nouvellement prédite. Les pseudonœuds ne sont pas pris en
 charge. Les distances du dessin ne représentent aucune mesure physique.
@@ -194,6 +216,7 @@ analysées. Aucun transfert réseau n'a lieu en dehors des demandes NCBI.
 - `gui/main_window.py` supervise le processus et les quatre rubriques.
 - `gui/ncbi.py` propose la recherche et l'aperçu dans la rubrique Séquences ARN.
 - `gui/widgets.py` partage les cartes d'état ; `gui/inspector.py` affiche les détails ARN.
+- `alignment/` fournit le modèle, le calcul et les correspondances, indépendamment de Qt.
 - `gui/comparison.py`, `gui/hic.py` et `gui/vtk_viewer.py` affichent les résultats.
 - `visualization/secondary_layout.py` et `secondary_diagram.py` dessinent la
   topologie ARN ; aucune nouvelle prédiction n'est exécutée par ces modules.

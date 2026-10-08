@@ -1,6 +1,25 @@
 # Historique des versions
 
-## Non publié — préparation v0.5.0
+## Non publié — préparation v0.5.0-rc1 (paquet 0.5.0rc1)
+
+- `AlignmentConfig` commune au moteur, au pipeline, à la CLI et à la GUI : défaut
+  conservé à 4 M, surcharge `.env`/environnement/CLI/GUI et validation explicite.
+- Commandes `run_alignment.py` et `benchmark_alignment.py` : FASTA/texte, génération
+  synthétique reproductible, résumé court et mesures manuelles Windows jusqu'à 50 M.
+- Paramètres avancés repliables, profils 4 M/25 M/50 M/personnalisé, distinction
+  limite/matrice actuelle, actions de dépassement et table d'alignement virtualisée.
+- Configuration effective et matrice persistées, y compris en mode positionnel ;
+  booléen d'ambiguïté, détails techniques à la réouverture et documentation dédiée.
+
+- Alignement global affine WT/MUT via Biopython, paramètres centralisés, limites de
+  taille, départage déterministe des optima et avertissement d'ambiguïté.
+- Correspondances utilisées dans l'inspecteur, la table, la sélection 2D/3D, les
+  deltas et la classification des paires ; gaps sans homologue ni delta fictif.
+- Bloc `alignment` enregistré dans les rapports et structures secondaires ; lecture
+  validée et fallback positionnel explicite pour les anciennes analyses, sans réécriture.
+- `--no-alignment` et case GUI pour le fallback manuel. Les exports alignés déclarent
+  leurs colonnes dans `coordinate_system` ; voir [la migration](docs/alignment.md).
+- Préparation de la rc1, recette desktop et capture d'une insertion avec substitution.
 
 - Cartes d'état communes : états vides guidés, opération annulable avec progression
   indéterminée, succès, erreurs et retour aux paramètres ; formulaires défilants.

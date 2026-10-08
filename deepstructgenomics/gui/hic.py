@@ -30,6 +30,7 @@ def hic_figure(report, mode="Contacts équilibrés"):
         ax.set(title=f"MDS inférée · {reconstruction.get('status', 'indisponible')}",
                xlabel="x (u.a.)", ylabel="y (u.a.)", zlabel="z (u.a.)")
     else:
+        from matplotlib.ticker import MaxNLocator
         ax = figure.add_subplot(111)
         matrix = np.array(report["balanced_matrix"], dtype=float)
         masked = report["normalization"]["masked_bins"]
@@ -48,6 +49,9 @@ def hic_figure(report, mode="Contacts équilibrés"):
                        [start + (row["bin2"] + .5) * step for row in loops],
                        facecolors="none", edgecolors="cyan", s=80, linewidths=1.5)
         ax.set(title=f"{region['chromosome']} · {mode}", xlabel="Position (bp, base 0)", ylabel="Position (bp, base 0)")
+        ax.xaxis.set_major_locator(MaxNLocator(nbins=3))
+        ax.yaxis.set_major_locator(MaxNLocator(nbins=3))
+        ax.tick_params(labelsize=9)
     return figure
 
 

@@ -18,7 +18,7 @@ from .widgets import Metrics, StateCard, button, label, page
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, workspace):
+    def __init__(self, workspace, alignment_config=None, sequence_inputs=None):
         super().__init__()
         self.workspace = Path(workspace).expanduser().resolve()
         self.history = RecentStore(self.workspace / "recent.json")
@@ -50,7 +50,7 @@ class MainWindow(QMainWindow):
             self.navigation.addButton(nav, index)
             sidebar_layout.addWidget(nav)
         sidebar_layout.addStretch()
-        sidebar_layout.addWidget(label("Moteur scientifique v0.4.6\nInterface en développement"))
+        sidebar_layout.addWidget(label("v0.5.0-rc1 · en préparation\nVersion candidate desktop"))
         sidebar_layout.addWidget(label("DeeW69"))
         row.addWidget(sidebar)
         body = QVBoxLayout()
@@ -101,7 +101,8 @@ class MainWindow(QMainWindow):
         self.latest_button.setEnabled(False)
         home.addWidget(self.latest_button)
         home.addWidget(label(f"Résultats enregistrés dans : {self.workspace}"))
-        self.sequences = SequencesPage()
+        self.sequences = SequencesPage(alignment_config, sequence_inputs)
+        self.sequences.failed.connect(self.show_error)
         self.comparison = ComparisonPage()
         self.hic = HicPage()
         self.ncbi = NcbiPage()
@@ -176,7 +177,7 @@ class MainWindow(QMainWindow):
             self.latest_title.setText(f"Dernière analyse ARN consultée · {entry['label']}")
             self.latest_metrics.set_values([
                 ("Bases WT", len(data["reference"]["sequence"])), ("Paires WT", metrics["wt_pairs"]),
-                ("Paires MUT", metrics["mut_pairs"]), ("Perdues", metrics["lost"]),
+                ("Paires MUT", metrics["mut_pairs"]), ("Absentes MUT" if metrics["deleted_pairs"] else "Perdues", metrics["lost"]),
                 ("Nouvelles", metrics["gained"]), ("|Δ| maximal", f"{metrics['max_abs_delta']:.3f}" if metrics["max_abs_delta"] is not None else None)])
             self.latest_button.setEnabled(True)
             break
@@ -210,7 +211,7 @@ class MainWindow(QMainWindow):
     def start_demo(self):
         self.sequences.fill_demo()
         self.navigate(1)
-        self.start_job("rna", self.sequences.parameters())
+        self.sequences.submit()
 
     def start_job(self, kind, parameters):
         if self.process is not None:
@@ -390,6 +391,17 @@ class MainWindow(QMainWindow):
         return 4 if kind.startswith("ncbi_") else 3 if kind == "hic" else 1
 
     def show_job_error(self, text, kind):
+        if kind == "rna" and "Alignement trop coûteux" in text:
+            def edit_limit():
+                self.navigate(1)
+                self.sequences.advanced.expand()
+                self.notice.hide()
+            def positional():
+                self.sequences.align_mutant.setChecked(False)
+                edit_limit()
+            self.notice.set_state("error", "Limite d'alignement dépassée", text,
+                [("Utiliser comparaison positionnelle", positional), ("Modifier la limite", edit_limit), ("Annuler", self.notice.hide)])
+            return
         title = "Recherche interrompue" if kind.startswith("ncbi_") else "Analyse interrompue"
         action = "Modifier la recherche" if kind == "ncbi_search" else "Choisir une autre notice" if kind == "ncbi_preview" else "Corriger la séquence" if kind == "rna" else "Corriger les paramètres"
         self.notice.set_state("error", title, text,

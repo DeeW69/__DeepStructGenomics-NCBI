@@ -7,6 +7,7 @@ import math
 from pathlib import Path
 
 from .io_structures import resolve_manifest_bundle
+from deepstructgenomics.alignment.mapping import ComparisonMapping, alignment_for
 
 INK = "#19334b"
 MUTED = "#64748b"
@@ -24,6 +25,7 @@ def load_secondary_data(manifest: str | Path) -> dict:
         raise ValueError("Structures secondaires absentes : regenerer les resultats avec le pipeline actuel.")
     data = json.loads(path.read_text(encoding="utf-8"))
     validate_secondary_data(data)
+    data["_comparison_mapping"] = ComparisonMapping.from_data(data)
     return data
 
 
@@ -65,6 +67,16 @@ def validate_secondary_data(data: dict) -> None:
                 parsed.add((stack.pop(), pos))
         if stack or parsed != {tuple(pair) for pair in pairs} or len(parsed) != len(pairs):
             raise ValueError(f"Appariements et dot-bracket {label} incoherents.")
+    if data.get("alignment") is not None:
+        if not data.get("mutant"):
+            raise ValueError("Alignement enregistré sans séquence mutante : résultat incohérent.")
+        alignment_for(data)
+    if data.get("alignment_run") is not None:
+        from deepstructgenomics.alignment.config import validate_alignment_metadata
+        validate_alignment_metadata(data["alignment_run"], len(data["reference"]["sequence"]),
+                                    len(data["mutant"]["sequence"]) if data.get("mutant") else 0)
+        if (data["alignment_run"]["status"] == "aligned") != (data.get("alignment") is not None):
+            raise ValueError("État d'alignement enregistré incohérent avec le résultat.")
 
 
 def build_secondary_figure(data: dict, *, compact: bool = False):
@@ -74,12 +86,21 @@ def build_secondary_figure(data: dict, *, compact: bool = False):
 
     validate_secondary_data(data)
     wt, mut = data["reference"], data.get("mutant")
+    mapping = ComparisonMapping.from_data(data)
+    delta_by_column = mapping.deltas(wt["scores"], mut["scores"]) if mut else {}
+    if mapping.alignment:
+        def project(structure, side):
+            positions = [c.reference_position if side == "reference" else c.mutant_position for c in mapping.columns]
+            return {**structure, "sequence": "".join(structure["sequence"][p - 1] if p else "-" for p in positions),
+                    "native_positions": positions,
+                    "base_pairs": [(i - 1, j - 1) for i, j in mapping.pairs(structure["base_pairs"], side)]}
+        wt, mut = project(wt, "reference"), project(mut, "mutant")
     wt_pairs = {tuple(pair) for pair in wt["base_pairs"]}
     mut_pairs = {tuple(pair) for pair in mut["base_pairs"]} if mut else set()
     lost = wt_pairs - mut_pairs if mut else set()
     gained = mut_pairs - wt_pairs if mut else set()
     length = max(len(wt["sequence"]), len(mut["sequence"]) if mut else 0)
-    shared = min(len(wt["sequence"]), len(mut["sequence"])) if mut else 0
+    shared = len(delta_by_column)
     changed = {idx for idx in range(length) if mut and
                wt["sequence"][idx:idx + 1] != mut["sequence"][idx:idx + 1]}
 
@@ -88,10 +109,10 @@ def build_secondary_figure(data: dict, *, compact: bool = False):
                            top=0.76, hspace=0.62, wspace=0.18, height_ratios=[1.2, 1])
     fig.text(0.06, 0.94, "ARN : comparer les appariements prédits", fontsize=21, weight="bold", color=INK)
     identifier = str(data.get("identifier", ""))[:70]
-    detail = f"{identifier}  ·  WT : {len(wt['sequence'])} bases"
-    detail += f"  ·  mutant : {len(mut['sequence'])} bases" if mut else "  ·  référence seule"
-    if mut and len(wt["sequence"]) != len(mut["sequence"]):
-        detail += "  ·  sans alignement"
+    detail = f"{identifier}  ·  WT : {len(data['reference']['sequence'])} bases"
+    detail += f"  ·  mutant : {len(data['mutant']['sequence'])} bases" if mut else "  ·  référence seule"
+    if mut:
+        detail += "  ·  colonnes d'alignement" if mapping.alignment else "  ·  comparaison brute par position, sans alignement"
     fig.text(0.06, 0.895, detail, fontsize=11, color=MUTED)
     fig.legend(handles=[Patch(color=COMMON, label="Paire conservée" if mut else "Paire prédite"),
                         Patch(color=LOST, label=f"Perdue ({len(lost)})"),
@@ -114,17 +135,20 @@ def build_secondary_figure(data: dict, *, compact: bool = False):
                              theta1=0, theta2=180, color=color if marked else COMMON,
                              linewidth=2.8 if marked else 1.8,
                              linestyle="--" if marked and column == 0 else "-"))
-        positions = list(range(1, len(sequence) + 1))
-        ax.plot(positions, [0] * len(sequence), color="#cbd5df", linewidth=1, zorder=1)
-        ax.scatter(positions, [0] * len(sequence), s=max(10, min(360, 4400 / length)),
-                   c=["#fff2d6" if i in changed else "#e7f1f2" for i in range(len(sequence))],
-                   edgecolors=[LOST if i in changed else "#e7f1f2" for i in range(len(sequence))], zorder=3)
+        positions = [i + 1 for i, base in enumerate(sequence) if base != "-"]
+        ax.plot(positions, [0] * len(positions), color="#cbd5df", linewidth=1, zorder=1)
+        ax.scatter(positions, [0] * len(positions), s=max(10, min(360, 4400 / length)),
+                   c=["#fff2d6" if i - 1 in changed else "#e7f1f2" for i in positions],
+                   edgecolors=[LOST if i - 1 in changed else "#e7f1f2" for i in positions], zorder=3)
         step = max(1, math.ceil(length / 24))
         for i, base in enumerate(sequence):
+            if base == "-":
+                continue
             if length <= 40:
                 ax.text(i + 1, 0, base, ha="center", va="center", fontsize=10, weight="bold", color=INK)
             if i % step == 0 or i == len(sequence) - 1:
-                ax.annotate(str(i + 1), (i + 1, 0), xytext=(0, -19), textcoords="offset points",
+                native = structure.get("native_positions", list(range(1, len(sequence) + 1)))[i]
+                ax.annotate(str(native), (i + 1, 0), xytext=(0, -19), textcoords="offset points",
                             ha="center", color=MUTED, fontsize=9)
         ax.set_xlim(0.3, length + 0.7)
         ax.set_ylim(-max(0.6, length * 0.03), max(2.6, length * 0.24))
@@ -136,8 +160,8 @@ def build_secondary_figure(data: dict, *, compact: bool = False):
         ax.text(0.5, 0.5, "Comparaison indisponible : fournir une séquence mutante.",
                 ha="center", transform=ax.transAxes, color=MUTED)
     else:
-        positions = list(range(1, shared + 1))
-        delta = [mut["scores"][i] - wt["scores"][i] for i in range(shared)]
+        positions = list(delta_by_column)
+        delta = list(delta_by_column.values())
         ax.bar(positions, delta, width=0.58, color=[DECREASE if v < 0 else INCREASE for v in delta], zorder=3)
         zeros = [p for p, value in zip(positions, delta) if abs(value) < 1e-9]
         ax.scatter(zeros, [0] * len(zeros), s=15, color="#afbfcc", zorder=4)
@@ -151,9 +175,9 @@ def build_secondary_figure(data: dict, *, compact: bool = False):
         ax.set_title(f"Δ score = mutant − WT  ·  {count}/{shared} positions communes modifiées",
                      loc="left", color=INK, fontsize=13, pad=12)
         ax.set_xlim(0.4, length + 0.6)
-        ax.set_ylim(min(-0.2, min(delta) - 0.18), max(0.2, max(delta) + 0.18))
+        ax.set_ylim(min(-0.2, min(delta, default=0) - 0.18), max(0.2, max(delta, default=0) + 0.18))
         ax.set_xticks(list(range(1, length + 1, max(1, math.ceil(length / 24)))))
-        ax.set_xlabel("Position dans la séquence (depuis 1)", color=INK)
+        ax.set_xlabel("Colonne d'alignement (depuis 1)" if mapping.alignment else "Position brute (depuis 1, sans alignement)", color=INK)
         ax.set_ylabel("Δ score", color=INK)
         ax.axhline(0, color=MUTED, linewidth=0.8)
         ax.grid(axis="y", color="#e8edf2", zorder=0)

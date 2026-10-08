@@ -1,5 +1,13 @@
 # Correspondance et numérotation des positions
 
+**Depuis v0.5.0-rc1**, la comparaison WT/MUT utilise par défaut des colonnes
+d'alignement. Les conventions historiques ci-dessous restent applicables au mode
+positionnel (`--no-alignment`) et aux anciens résultats. Pour une analyse alignée,
+lire `coordinate_system` dans les rapports et consulter [les correspondances et
+la migration](alignment.md#exports-et-migration) : une colonne peut avoir une
+position WT, une position MUT, ou un gap. Les coordonnées natives des paires,
+scores individuels et PDB restent inchangées.
+
 Ce document détaille les conventions de numérotation et de repérage des positions
 utilisées à travers l'ensemble de la chaîne de traitement de DeepStructGenomics-NCBI :
 des séquences biologiques brutes jusqu'aux rapports d'analyse et aux fichiers de
@@ -238,9 +246,10 @@ hotspots_pos <- report$impact_summary$hotspots$position # direct: 12, 1
 substitutions_pos <- report$variant_analysis$substitutions$position + 1 # conversion en base 1
 ```
 
-### Cas des séquences de longueurs inégales
+### Cas historique des séquences de longueurs inégales (fallback positionnel)
 
-La comparaison est positionnelle, **sans alignement**. Le tableau des
+Lorsque l'alignement est absent ou explicitement désactivé, la comparaison est
+positionnelle, **sans alignement**. Le tableau des
 substitutions parcourt les indices $0 \dots \max(L_{\text{wt}}, L_{\text{mut}})-1$ ;
 au-delà de la séquence la plus courte, `reference` ou `mutant` vaut `"-"` pour
 signaler une base absente. Ce remplissage ne constitue pas un alignement et

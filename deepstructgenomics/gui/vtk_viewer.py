@@ -3,6 +3,7 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QPlainTextEdit, QVBoxLayout, QWidget
 
 from .widgets import button, label
+from deepstructgenomics.alignment.mapping import ComparisonMapping
 
 
 class VTKView(QWidget):
@@ -19,6 +20,7 @@ class VTKView(QWidget):
         from deepstructgenomics.visualization.io_structures import load_structure, resolve_manifest_bundle
         from deepstructgenomics.visualization.tk_vtk_overlay import BasePairOptions, OverlayDeltaViewer
         bundle = resolve_manifest_bundle(manifest)
+        self.mapping = ComparisonMapping.from_data(data)
         layout = QVBoxLayout(self)
         layout.addWidget(label("Visualisation schématique · géométrie fondée sur la longueur, pas une conformation moléculaire.", "badge"))
         controls = QHBoxLayout()
@@ -26,6 +28,7 @@ class VTKView(QWidget):
             bundle["wt_structure"], bundle["mutant_structure"],
             bundle["wt_score_file"], bundle["mutant_score_file"],
             glyph_scale=.58,
+            alignment=self.mapping.alignment,
             base_pair_config=BasePairOptions(enabled=True,
                 wt_pairs=[(i + 1, j + 1) for i, j in data["reference"]["base_pairs"]],
                 mut_pairs=[(i + 1, j + 1) for i, j in data["mutant"]["base_pairs"]]),
@@ -54,7 +57,8 @@ class VTKView(QWidget):
             for index, coord in enumerate(structure.as_numpy()):
                 text = vtkBillboardTextActor3D()
                 base = data["mutant"]["sequence"][index]
-                wt_base = data["reference"]["sequence"][index:index + 1]
+                column = self.mapping.columns[self.mapping.to_column["mutant"][index + 1] - 1]
+                wt_base = column.reference_base
                 text.SetInput(f"{index + 1} {wt_base}>{base}" if wt_base and wt_base != base else f"{index + 1} {base}")
                 text.SetPosition(float(coord[0]), float(coord[1]) + 1.1, float(coord[2]) + .6)
                 text.GetTextProperty().SetFontSize(13)
@@ -75,7 +79,7 @@ class VTKView(QWidget):
         self.widget.AddObserver("LeftButtonPressEvent", self.pick)
         self.widget.Initialize()
         self.reset()
-        layout.addWidget(label("Bleu : diminution du score   ·   Blanc : aucun changement   ·   Rouge : augmentation"))
+        layout.addWidget(label("Bleu : diminution · Blanc : aucun changement · Rouge : augmentation · Gris : pas d'homologue"))
         technical = QCheckBox("Informations techniques")
         layout.addWidget(technical)
         self.details = QPlainTextEdit(details)
@@ -103,7 +107,7 @@ class VTKView(QWidget):
         if self.picker.Pick(x, y, 0, self.renderer):
             position = self.viewer.position_near(self.picker.GetPickPosition())
             if position is not None:
-                self.selected.emit(position)
+                self.selected.emit(self.mapping.to_column["mutant"][position])
 
     def shutdown(self):
         self.widget.Finalize()

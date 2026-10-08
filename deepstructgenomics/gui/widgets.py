@@ -74,7 +74,7 @@ class StateCard(QFrame):
         self.actions = QHBoxLayout(self.action_row)
         self.actions.setContentsMargins(0, 0, 0, 0)
         self.controls = []
-        for i in range(2):
+        for i in range(3):
             control = button("", lambda checked=False, index=i: self.trigger(index), i == 0)
             self.controls.append(control)
             self.actions.addWidget(control)

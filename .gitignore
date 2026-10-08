@@ -22,6 +22,7 @@ dist/
 # Local configuration and secrets
 .env
 .env.*
+!.env.example
 
 # Editor / OS files
 .DS_Store

@@ -145,9 +145,14 @@ def main() -> None:
     if not args.mode and not args.manifest:
         raise SystemExit("Fournir au moins --mode ou --manifest.")
 
+    alignment = None
     if args.manifest:
         try:
             bundle = resolve_manifest_bundle(args.manifest)
+            if bundle.get("secondary_structure_file") and bundle["secondary_structure_file"].is_file():
+                from deepstructgenomics.visualization.secondary_view import load_secondary_data
+                from deepstructgenomics.alignment.mapping import alignment_for
+                alignment = alignment_for(load_secondary_data(args.manifest))
         except (ValueError, OSError) as exc:
             raise SystemExit(f"Erreur de lecture du manifeste : {exc}") from None
 
@@ -207,6 +212,8 @@ def main() -> None:
         tooltip_enabled = None
         tooltip_verbose = None
     links_enabled = args.links and not args.no_links
+    if alignment is not None and links_enabled:
+        raise SystemExit("Connecteurs WT/MUT indisponibles avec alignement : leur calcul par indices bruts n'est pas adapté aux indels.")
     link_threshold = args.link_threshold
     link_metric = args.link_metric
     if not link_metric:
@@ -272,6 +279,7 @@ def main() -> None:
             args.mut,
             args.wt_scores,
             args.mut_scores,
+            alignment=alignment,
             show_backbone=not args.no_backbone,
             enable_tooltip=tooltip_enabled,
             tooltip_verbose=tooltip_verbose,

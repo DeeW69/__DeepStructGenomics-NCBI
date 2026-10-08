@@ -16,13 +16,14 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from deepstructgenomics.config import NCBIConfig, PipelineConfig
 from deepstructgenomics.pipeline import DeepStructPipeline, PipelineInput
+from deepstructgenomics.alignment.config import add_alignment_arguments, config_from_args, load_sequence_inputs
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Pipeline sequence -> structure -> impact base sur les donnees NCBI."
     )
-    source = parser.add_mutually_exclusive_group(required=True)
+    source = parser.add_mutually_exclusive_group()
     source.add_argument("--accession", help="Identifiant NCBI (nuccore).")
     source.add_argument("--sequence", help="Sequence ADN/ARN brute (ACGTU).")
     source.add_argument("--fasta", type=Path, help="Fichier FASTA local contenant une seule sequence ADN/ARN.")
@@ -32,6 +33,7 @@ def parse_args() -> argparse.Namespace:
     mutant.add_argument("--mutant-sequence", help="Sequence mutante pour comparaison.")
     mutant.add_argument("--mutant-fasta", type=Path, help="Fichier FASTA local contenant une seule sequence mutante.")
     parser.add_argument("--output-dir", default="outputs", help="Dossier de sortie des rapports.")
+    add_alignment_arguments(parser)
     parser.add_argument("--top-k", type=int, default=10, help="Nombre maximal de positions les plus modifiees a inclure dans les rapports (defaut : 10).")
     parser.add_argument(
         "--min-abs-delta",
@@ -52,6 +54,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--refresh-cache", action="store_true", help="Retelecharger la sequence NCBI et ses metadonnees.")
     parser.add_argument("--ncbi-api-key", help="Cle API optionnelle pour augmenter les quotas.")
     args = parser.parse_args()
+    try:
+        args.alignment_config = config_from_args(args)
+        inputs = load_sequence_inputs(args.env_file, cli={"sequence": args.sequence, "fasta_path": args.fasta,
+            "accession": args.accession, "batch_fasta": args.batch_fasta,
+            "mutant_sequence": args.mutant_sequence, "mutant_fasta_path": args.mutant_fasta})
+        args.sequence = inputs.get("sequence")
+        args.fasta = inputs.get("fasta_path")
+        args.mutant_sequence = inputs.get("mutant_sequence")
+        args.mutant_fasta = inputs.get("mutant_fasta_path")
+    except (ValueError, OSError) as exc:
+        parser.error(str(exc))
+    if not any((args.sequence, args.fasta, args.accession, args.batch_fasta)):
+        parser.error("Fournir une source WT : --sequence, --fasta, --accession, --batch-fasta ou configuration externe.")
     if args.batch_fasta and (args.label or args.mutant_sequence or args.mutant_fasta):
         parser.error("--batch-fasta ne permet pas --label ni une comparaison mutante.")
     return args
@@ -63,6 +78,7 @@ def main() -> None:
         if args.batch_fasta:
             from deepstructgenomics.batch import run_fasta_batch
             summary = run_fasta_batch(args.batch_fasta, args.output_dir,
+                                      alignment_config=args.alignment_config,
                                       top_k=args.top_k, min_abs_delta=args.min_abs_delta,
                                       base_pair_threshold=args.base_pair_threshold)
             print(f"Lot termine : {summary['succeeded']} succes, {summary['failed']} erreurs.")
@@ -70,6 +86,7 @@ def main() -> None:
                 raise SystemExit(2)
             return
         request = PipelineInput(
+            alignment_config=args.alignment_config,
             accession=args.accession,
             sequence=args.sequence,
             sequence_label=args.label,

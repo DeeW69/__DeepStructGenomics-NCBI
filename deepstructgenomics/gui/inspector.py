@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFormLayout, QFrame, QScrollArea, QVBoxLayout, QWidget
 
 from .services import inspection_details
+from deepstructgenomics.alignment.mapping import ComparisonMapping
 from .widgets import StateCard, label
 
 
@@ -25,9 +26,11 @@ class RnaInspector(QScrollArea):
             card = QFrame()
             card.setObjectName("card")
             rows = QFormLayout(card)
+            rows.setContentsMargins(8, 6, 8, 6)
+            rows.setVerticalSpacing(3)
             rows.addRow(label(title, "stateTitle"))
             self.fields[key] = {}
-            for field, caption in (("base", "Base"), ("score", "Score"), ("context", "Contexte"), ("partner", "Partenaire")):
+            for field, caption in (("position", "Position"), ("base", "Base"), ("score", "Score"), ("context", "Contexte"), ("partner", "Partenaire")):
                 value = label("—")
                 rows.addRow(caption, value)
                 self.fields[key][field] = value
@@ -36,6 +39,7 @@ class RnaInspector(QScrollArea):
         self.layout.addWidget(self.delta)
         self.badges = [StateCard() for _ in range(3)]
         for badge in self.badges:
+            badge.layout().setContentsMargins(10, 6, 10, 6)
             badge.hide()
             self.layout.addWidget(badge)
         self.local_title = label("Séquence locale")
@@ -52,12 +56,14 @@ class RnaInspector(QScrollArea):
 
     def display(self, data, position, contexts):
         detail = inspection_details(data, position)
-        self.heading.setText(f"Position {position}")
+        mapping = ComparisonMapping.from_data(data)
+        self.heading.setText(f"Colonne alignée {position}" if mapping.alignment else f"Position {position}")
         for column, key in enumerate(("reference", "mutant")):
             entry = detail[key]
-            values = {"base": entry["base"] if entry else "Indisponible",
+            values = {"position": str(entry["position"]) if entry else "Pas d'homologue" if mapping.alignment else "—",
+                      "base": entry["base"] if entry else "Indisponible",
                       "score": f"{entry['score']:.3f}" if entry else "—",
-                      "context": contexts[column][position - 1] if entry else "—",
+                      "context": contexts[column][entry["position"] - 1] if entry else "—",
                       "partner": entry["partner_label"] if entry else "—"}
             for field, value in values.items():
                 self.fields[key][field].setText(value)
@@ -69,7 +75,7 @@ class RnaInspector(QScrollArea):
             else:
                 badge.hide()
         start, end = detail["local_start"], detail["local_end"]
-        self.local_title.setText(f"Séquence locale · {start}–{end}")
+        self.local_title.setText(f"Colonnes {start}–{end}" if mapping.alignment else f"Séquence locale · {start}–{end}")
         rows = []
         for key, title in (("reference", "WT "), ("mutant", "MUT")):
             bases = [f'<span style="background-color:#127c82;color:white"><b>{escape(base)}</b></span>'
@@ -80,7 +86,7 @@ class RnaInspector(QScrollArea):
             note = "Référence seule : comparaison indisponible."
         elif not detail["reference"] or not detail["mutant"]:
             note = "Position absente d'une séquence : comparaison indisponible."
-        elif len(data["reference"]["sequence"]) != len(data["mutant"]["sequence"]):
+        elif not mapping.alignment and len(data["reference"]["sequence"]) != len(data["mutant"]["sequence"]):
             note = "Longueurs différentes : comparaison par position, sans alignement."
         elif not detail["changes"]:
             note = "Base non appariée dans les deux prédictions."

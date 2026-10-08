@@ -26,7 +26,21 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="DeepStructGenomics — espace d'analyse desktop")
     parser.add_argument("--workspace", type=Path, default=Path("outputs_gui"))
     parser.add_argument("--manifest", type=Path, help="Ouvrir un résultat ARN existant.")
+    from deepstructgenomics.alignment.config import add_alignment_arguments, config_from_args, load_sequence_inputs
+    add_alignment_arguments(parser)
+    wt = parser.add_mutually_exclusive_group()
+    wt.add_argument("--sequence")
+    wt.add_argument("--fasta", dest="fasta_path")
+    mut = parser.add_mutually_exclusive_group()
+    mut.add_argument("--mutant-sequence")
+    mut.add_argument("--mutant-fasta", dest="mutant_fasta_path")
     args = parser.parse_args(argv)
+    try:
+        alignment_config = config_from_args(args)
+        inputs = load_sequence_inputs(args.env_file, cli={key: getattr(args, key) for key in
+                                      ("sequence", "fasta_path", "mutant_sequence", "mutant_fasta_path")})
+    except (ValueError, OSError) as exc:
+        parser.error(str(exc))
     try:
         from PySide6.QtWidgets import QApplication
     except ImportError as exc:
@@ -39,7 +53,7 @@ def main(argv=None):
     app.setApplicationName("DeepStructGenomics")
     app.setOrganizationName("DeeW69")
     apply_theme(app)
-    window = MainWindow(args.workspace)
+    window = MainWindow(args.workspace, alignment_config, inputs)
     window.show()
     if args.manifest:
         window.open_rna(args.manifest)

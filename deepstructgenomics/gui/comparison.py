@@ -2,13 +2,15 @@
 from pathlib import Path
 
 from PySide6.QtCore import Signal
+from deepstructgenomics.alignment.mapping import ComparisonMapping
 from PySide6.QtWidgets import (
     QFileDialog, QHBoxLayout, QHeaderView, QSpinBox, QSplitter,
-    QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget,
+    QTableView, QTabWidget, QVBoxLayout, QWidget,
 )
-from .services import position_details, read_rna
+from .services import read_rna
 from .widgets import FigureView, Metrics, StateCard, button, label
 from .inspector import RnaInspector
+from .alignment_table import AlignmentTableModel
 
 
 class ComparisonPage(QWidget):
@@ -26,6 +28,8 @@ class ComparisonPage(QWidget):
         layout.addWidget(label("Comparaison structurelle", "heading"))
         self.subtitle = label("Ouvrez un résultat ou lancez une analyse ARN.", "subheading")
         layout.addWidget(self.subtitle)
+        self.alignment_note = label("", "subheading")
+        layout.addWidget(self.alignment_note)
         self.empty = StateCard("Aucune séquence sélectionnée", "Recherchez NCBI, importez un FASTA ou saisissez une séquence.",
                                actions=[("Rechercher NCBI", self.search_requested.emit), ("Nouvelle analyse", self.new_analysis.emit)])
         layout.addWidget(self.empty)
@@ -34,12 +38,15 @@ class ComparisonPage(QWidget):
         self.tabs = QTabWidget()
         self.figure_view = FigureView()
         self.tabs.addTab(self.figure_view, "Structure secondaire")
-        self.table = QTableWidget(0, 8)
-        self.table.setHorizontalHeaderLabels(["Position", "WT", "Mutant", "Score WT", "Score MUT", "Δ", "Contexte WT", "Contexte MUT"])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.table = QTableView()
+        self.table.verticalHeader().hide()
+        self.table.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QTableView.SelectionMode.SingleSelection)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setResizeContentsPrecision(50)
+        self.table.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
-        self.table.cellClicked.connect(lambda row, _: self.position.setValue(row + 1))
+        self.table.clicked.connect(lambda index: self.position.setValue(index.row() + 1))
         self.tabs.addTab(self.table, "Séquence")
         delta_page = QWidget()
         delta_layout = QVBoxLayout(delta_page)
@@ -55,6 +62,8 @@ class ComparisonPage(QWidget):
         self.vtk_button = button("Charger la vue 3D schématique", self.load_vtk)
         self.vtk_layout.addWidget(self.vtk_button)
         self.tabs.addTab(self.vtk_host, "3D schématique")
+        self.technical = label("")
+        self.tabs.addTab(self.technical, "Paramètres utilisés")
         self.splitter = QSplitter()
         self.splitter.addWidget(self.tabs)
         self.inspector = RnaInspector()
@@ -86,6 +95,19 @@ class ComparisonPage(QWidget):
         delta_figure = build_secondary_figure(data, compact=True)
         self.shutdown()
         self.manifest, self.data = Path(manifest), data
+        self.mapping = ComparisonMapping.from_data(data)
+        run = data.get("alignment_run")
+        if run:
+            matrix, config = run["matrix"], run["configuration"]
+            self.technical.setText(f"Configuration enregistrée pour cette analyse · {run['status']}\n\n"
+                f"WT : {matrix['wt_length']:,} nt · MUT : {matrix['mut_length']:,} nt\n"
+                f"Matrice théorique WT × MUT : {matrix['cells']:,} cellules\n"
+                f"Limite : {config['max_cells']:,} cellules · utilisation : {100 * matrix['cells'] / config['max_cells']:.6g} %\n"
+                f"Longueur maximale : {config['max_length']:,} nt\n"
+                f"Match {config['match_score']:+g} · mismatch {config['mismatch_score']:+g} · ouverture {config['gap_open_score']:+g} · extension {config['gap_extend_score']:+g}\n"
+                f"Politique de dépassement : {config['overflow_policy']}\n\nLa matrice théorique ne mesure pas la mémoire allouée.\n" + run.get("reason", ""))
+        else:
+            self.technical.setText("Ancien résultat : configuration effective non enregistrée. Aucun paramètre actuel n'est substitué aux paramètres historiques.")
         self.empty.hide()
         self.splitter.show()
         self.summary = (f"{len(data['reference']['sequence'])} bases · {metrics['wt_pairs']} paires WT"
@@ -96,12 +118,19 @@ class ComparisonPage(QWidget):
         self.vtk_button.setText("Charger la vue 3D schématique" if data.get("mutant") else "Vue superposée : mutant requis")
         self.subtitle.setText(str(data.get("identifier", "ARN")) + (" · WT vs mutant" if data.get("mutant") else " · WT seul")
                               + " · Nussinov pondéré · positions depuis 1")
-        if data.get("mutant") and len(data["mutant"]["sequence"]) != len(data["reference"]["sequence"]):
-            self.subtitle.setText(self.subtitle.text() + " · longueurs différentes, sans alignement")
+        alignment = self.mapping.alignment
+        if alignment:
+            c = alignment.counts
+            self.alignment_note.setText(f"Alignement WT/MUT : actif · WT {len(data['reference']['sequence'])} nt / MUT {len(data['mutant']['sequence'])} nt · "
+                f"Identité {alignment.identity:.1%} (gaps inclus) · {c['substitution']} substitution(s), {c['insertion']} insertion(s), {c['deletion']} délétion(s)"
+                + ("\n" + " ".join(alignment.warnings) if alignment.warnings else ""))
+        else:
+            self.alignment_note.setText("Alignement WT/MUT : non calculé — comparaison brute par position. Les indels peuvent décaler les correspondances." if data.get("mutant") else "Référence seule : comparaison indisponible")
         self.metrics.set_values([
             ("Bases WT", len(data["reference"]["sequence"])),
             ("Paires WT", metrics["wt_pairs"]), ("Paires MUT", metrics["mut_pairs"]),
-            ("Paires perdues", metrics["lost"]), ("Paires gagnées", metrics["gained"]),
+            ("Perdues / supprimées" if metrics["deleted_pairs"] else "Paires perdues", metrics["lost"]),
+            ("Nouvelles (+ indels)" if metrics["inserted_pairs"] else "Paires gagnées", metrics["gained"]),
             ("Δ absolu maximal", f"{metrics['max_abs_delta']:.3f}" if metrics["max_abs_delta"] is not None else None),
         ])
         self.figure_view.set_figure(figure)
@@ -111,31 +140,26 @@ class ComparisonPage(QWidget):
         self.contexts = list(figure.rna_contexts.values())
         self.subtitle.setText(self.subtitle.text() + " · " + figure.rna_layout_note)
         if data.get("mutant"):
-            wt_pairs = set(map(tuple, data["reference"]["base_pairs"]))
-            mut_pairs = set(map(tuple, data["mutant"]["base_pairs"]))
+            changes = self.mapping.classify_pairs(data["reference"]["base_pairs"], data["mutant"]["base_pairs"])
             def pair_text(pairs):
                 ordered = sorted(pairs)
-                return (", ".join(f"{i + 1}–{j + 1}" for i, j in ordered[:12]) or "aucune") + ("…" if len(ordered) > 12 else "")
-            self.pair_changes.setText(f"Paires perdues : {pair_text(wt_pairs - mut_pairs)}\nNouvelles paires : {pair_text(mut_pairs - wt_pairs)}")
+                return (", ".join(f"{i}–{j}" for i, j in ordered[:12]) or "aucune") + ("…" if len(ordered) > 12 else "")
+            self.pair_changes.setText(("Colonnes d'alignement" if alignment else "Positions brutes") +
+                f" · Perdues : {pair_text(changes['lost'])} · Nouvelles : {pair_text(changes['gained'])}"
+                + (f"\nSupprimées avec une base : {pair_text(changes['deleted'])} · Nouvelles avec insertion : {pair_text(changes['inserted'])}" if alignment else ""))
         else:
             self.pair_changes.setText("Comparaison indisponible sans mutant.")
-        n = max(len(data["reference"]["sequence"]), len(data["mutant"]["sequence"]) if data.get("mutant") else 0)
+        n = len(self.mapping.columns)
         self.position.setMaximum(n)
-        self.table.setRowCount(n)
-        for index in range(n):
-            detail = position_details(data, index + 1)
-            wt, mut = detail["reference"], detail["mutant"]
-            values = [index + 1, wt["base"] if wt else "—", mut["base"] if mut else "—",
-                      f"{wt['score']:.3f}" if wt else "—", f"{mut['score']:.3f}" if mut else "—",
-                      f"{detail['delta']:+.3f}" if detail["delta"] is not None else "—",
-                      self.contexts[0][index] if index < len(self.contexts[0]) else "—",
-                      self.contexts[1][index] if len(self.contexts) > 1 and index < len(self.contexts[1]) else "—"]
-            for column, value in enumerate(values):
-                self.table.setItem(index, column, QTableWidgetItem(str(value)))
+        old_model = self.table.model()
+        self.table.setModel(AlignmentTableModel(data, self.mapping, self.contexts, self.table))
+        if old_model:
+            old_model.deleteLater()
         self.position.setValue(1)
         self.show_position(1)
         self.export_button.setEnabled(True)
         self.tabs.setCurrentIndex(0)
+        self.tabs.setTabText(1, "Alignement WT/MUT" if alignment else "Séquence")
 
     def pick_position(self, event):
         if getattr(event.canvas, "toolbar", None) and event.canvas.toolbar.mode:
@@ -152,6 +176,7 @@ class ComparisonPage(QWidget):
         if not self.data:
             return
         self.inspector.display(self.data, position, self.contexts)
+        self.table.selectRow(position - 1)
         from deepstructgenomics.visualization.secondary_diagram import select_position
         select_position(self.figure_view.figure, position)
 

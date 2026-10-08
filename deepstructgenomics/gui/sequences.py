@@ -5,13 +5,16 @@ from PySide6.QtWidgets import (
     QLineEdit, QPlainTextEdit, QStackedWidget, QVBoxLayout, QWidget,
 )
 from .widgets import StateCard, button, label
+from .alignment_settings import AlignmentSettings
+from deepstructgenomics.alignment.config import load_alignment_config, load_sequence_inputs
 
 
 class SequencesPage(QWidget):
     requested = Signal(dict)
     search_requested = Signal()
+    failed = Signal(str)
 
-    def __init__(self):
+    def __init__(self, alignment_config=None, sequence_inputs=None):
         super().__init__()
         self.ncbi_preview = None
         layout = QVBoxLayout(self)
@@ -81,6 +84,9 @@ class SequencesPage(QWidget):
         self.mutant_source.currentIndexChanged.connect(self.update_mutant)
         self.update_mutant(0)
         layout.addWidget(mutant_box)
+        self.advanced = AlignmentSettings(alignment_config or load_alignment_config())
+        self.align_mutant = self.advanced.enabled
+        layout.addWidget(self.advanced)
         layout.addWidget(label("Méthode : Nussinov pondéré · scores heuristiques · aucune énergie MFE calculée.", "badge"))
         actions = QHBoxLayout()
         actions.addWidget(button("Remplir la démo C12A", self.fill_demo))
@@ -93,6 +99,29 @@ class SequencesPage(QWidget):
         self.fasta.textChanged.connect(self.update_empty)
         self.accession.textChanged.connect(self.update_empty)
         self.update_empty()
+        inputs = load_sequence_inputs() if sequence_inputs is None else sequence_inputs
+        if inputs.get("sequence"):
+            self.sequence.setPlainText(inputs["sequence"])
+        elif inputs.get("fasta_path"):
+            self.fasta.setText(str(inputs["fasta_path"]))
+            self.source.setCurrentIndex(1)
+        if inputs.get("mutant_sequence"):
+            self.mutant.setPlainText(inputs["mutant_sequence"])
+            self.mutant_source.setCurrentIndex(1)
+        elif inputs.get("mutant_fasta_path"):
+            self.mutant_fasta.setText(str(inputs["mutant_fasta_path"]))
+            self.mutant_source.setCurrentIndex(2)
+        for signal in (self.sequence.textChanged, self.mutant.textChanged, self.source.currentIndexChanged,
+                       self.mutant_source.currentIndexChanged):
+            signal.connect(self.update_matrix)
+        self.update_matrix()
+
+    def update_matrix(self, *_):
+        wt = len("".join(self.sequence.toPlainText().split())) if self.source.currentIndex() == 0 else None
+        if self.source.currentIndex() == 2 and self.ncbi_preview:
+            wt = len(self.ncbi_preview["sequence"])
+        mut = len("".join(self.mutant.toPlainText().split())) if self.mutant_source.currentIndex() == 1 else None
+        self.advanced.set_lengths(wt, mut)
 
     def update_empty(self, *_):
         value = (self.sequence.toPlainText(), self.fasta.text(), self.accession.text())[self.source.currentIndex()]
@@ -128,6 +157,7 @@ class SequencesPage(QWidget):
         self.reference_note.setText(f"Référence sélectionnée : {preview['accession']} · {length} nt\n{preview['description']}"
                                    + ("\nARN long : calcul Nussinov potentiellement coûteux, annulable." if length > 500 else ""))
         self.reference_note.show()
+        self.update_matrix()
 
     def parameters(self):
         index = self.source.currentIndex()
@@ -142,7 +172,14 @@ class SequencesPage(QWidget):
             source["mutant_sequence"] = self.mutant.toPlainText()
         elif self.mutant_source.currentIndex() == 2:
             source["mutant_fasta_path"] = self.mutant_fasta.text()
+        source["alignment_config"] = self.advanced.configuration().to_dict()
         return source
 
     def submit(self):
-        self.requested.emit(self.parameters())
+        try:
+            parameters = self.parameters()
+        except ValueError as exc:
+            self.failed.emit(str(exc))
+            self.advanced.expand()
+            return
+        self.requested.emit(parameters)

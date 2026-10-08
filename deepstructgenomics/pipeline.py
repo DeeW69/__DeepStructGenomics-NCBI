@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence, Tuple
 
 from deepstructgenomics.analysis.impact_summary import build_impact_summary
+from deepstructgenomics.alignment import AlignmentResult, align_sequences
+from deepstructgenomics.alignment.mapping import ComparisonMapping
+from deepstructgenomics.alignment.config import AlignmentConfig, alignment_metadata, overflow_reason
 from deepstructgenomics.config import PipelineConfig
 from deepstructgenomics.data_sources.ncbi_client import (
     NCBIClient,
@@ -56,8 +59,14 @@ class PipelineInput:
     min_abs_delta: float = 0.1
     base_pair_threshold: float = 0.2
     refresh_cache: bool = False
+    align_mutant: Optional[bool] = None  # compatibility override; new callers pass alignment_config
+    alignment_config: AlignmentConfig = field(default_factory=AlignmentConfig)
 
     def __post_init__(self) -> None:
+        if isinstance(self.alignment_config, dict):
+            self.alignment_config = AlignmentConfig(**self.alignment_config)
+        if self.align_mutant is not None:
+            self.alignment_config = replace(self.alignment_config, enabled=self.align_mutant)
         sources = (self.accession, self.sequence, self.fasta_path)
         if sum(value is not None for value in sources) != 1:
             raise ValueError("Fournir exactement une source : accession NCBI, sequence ou fichier FASTA.")
@@ -93,6 +102,8 @@ class PipelineResult:
     report_paths: Optional[ReportPaths] = None
     visualization_paths: Optional["VisualizationArtifactPaths"] = None
     impact_summary: Optional[Dict[str, Any]] = None
+    alignment: Optional[AlignmentResult] = None
+    alignment_run: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -134,6 +145,12 @@ class DeepStructPipeline:
             mutant_record = normalize_user_sequence(request.mutant_sequence, f"{sequence_record.identifier}_mut")
 
         # Resolve and validate both inputs before starting the folding algorithm.
+        alignment = align_sequences(sequence_record.sequence, mutant_record.sequence, request.alignment_config) if mutant_record else None
+        status = "aligned" if alignment else "reference_only" if not mutant_record else "disabled" if not request.alignment_config.enabled else "overflow_positional"
+        alignment_run = alignment_metadata(request.alignment_config, len(sequence_record.sequence),
+                                           len(mutant_record.sequence) if mutant_record else 0, status)
+        if status == "overflow_positional":
+            alignment_run["reason"] = overflow_reason(request.alignment_config, len(sequence_record.sequence), len(mutant_record.sequence))
         annotations = self._annotate_sequence(sequence_record)
         structure = predict_secondary_structure(sequence_record.sequence, self.config.rna)
 
@@ -147,6 +164,7 @@ class DeepStructPipeline:
                 mutant_record.sequence,
                 structure.base_pairs,
                 mutant_structure.base_pairs,
+                alignment=alignment,
             )
             mutant_sequence = mutant_record.sequence
 
@@ -158,6 +176,8 @@ class DeepStructPipeline:
             mutant_sequence=mutant_sequence,
             mutant_structure=mutant_structure,
             generated_at=datetime.now(timezone.utc),
+            alignment=alignment,
+            alignment_run=alignment_run,
         )
         result.impact_summary = self._summarize_impact(
             result,
@@ -207,13 +227,15 @@ class DeepStructPipeline:
         if result.mutant_structure is not None:
             wt_scores = ScoreTable(position_scores=derive_position_scores_from_structure(result.structure))
             mutant_scores = ScoreTable(position_scores=derive_position_scores_from_structure(result.mutant_structure))
-            delta_scores = compute_delta_scores(wt_scores, mutant_scores).position_scores
-            base_pair_sets["mutant"] = [(i + 1, j + 1) for i, j in result.mutant_structure.base_pairs]
+            mapping = ComparisonMapping(result.structure.sequence, result.mutant_sequence, result.alignment)
+            delta_scores = mapping.deltas(list(wt_scores.position_scores.values()), list(mutant_scores.position_scores.values()))
+            base_pair_sets = {"wt": sorted(mapping.pairs(result.structure.base_pairs, "reference")),
+                              "mutant": sorted(mapping.pairs(result.mutant_structure.base_pairs, "mutant"))}
             note = None if delta_scores else "delta scores unavailable"
-            if len(result.structure.sequence) != len(result.mutant_structure.sequence):
+            if not result.alignment and len(result.structure.sequence) != len(result.mutant_structure.sequence):
                 note = "different sequence lengths; positional comparison without alignment"
 
-        return build_impact_summary(
+        summary = build_impact_summary(
             result.sequence_record.identifier,
             result.generated_at,
             delta_scores,
@@ -223,6 +245,8 @@ class DeepStructPipeline:
             base_pairs=base_pair_sets,
             base_pair_threshold=base_pair_threshold,
         )
+        summary["coordinate_system"] = "alignment_column_1based" if result.alignment else "sequence_position_1based"
+        return summary
 
     @staticmethod
     def _annotate_sequence(record: SequenceRecord) -> Dict[str, Any]:
@@ -287,7 +311,8 @@ class DeepStructPipeline:
             mutant_score_path = write_score_table(viz_dir / "mutant_scores.json", mutant_table)
             mutant_stats = compute_score_statistics(mutant_table)
 
-            delta_table = compute_delta_scores(wt_table, mutant_table)
+            mapping = ComparisonMapping(result.structure.sequence, result.mutant_sequence, result.alignment)
+            delta_table = ScoreTable(position_scores=mapping.deltas(list(wt_position_scores.values()), list(mut_position_scores.values())))
             delta_stats = compute_score_statistics(delta_table)
             delta_range_mode = "dynamic_symmetric"
 
@@ -295,8 +320,9 @@ class DeepStructPipeline:
             mut_coords = generate_coarse_backbone(result.mutant_structure.sequence)
             max_len = min(len(wt_coords), len(mut_coords))
             if max_len:
-                mapping = {idx + 1: (idx, idx) for idx in range(max_len)}
-                distances = compute_displacements(wt_coords, mut_coords, mapping)
+                positions = {c.index: (c.reference_position - 1, c.mutant_position - 1) for c in mapping.columns
+                             if c.reference_position is not None and c.mutant_position is not None}
+                distances = compute_displacements(wt_coords, mut_coords, positions)
                 displacement_stats = summarize_displacements(distances)
         else:
             # maintain backward compatibility by keeping a mutant_scores.json identical to WT
@@ -314,8 +340,8 @@ class DeepStructPipeline:
         export_hotspots_csv(
             hotspots,
             hotspots_csv_path,
-            reference_sequence=result.structure.sequence,
-            mutant_sequence=result.mutant_sequence,
+            reference_sequence=result.alignment.aligned_reference if result.alignment else result.structure.sequence,
+            mutant_sequence=result.alignment.aligned_mutant if result.alignment else result.mutant_sequence,
         )
 
         def structure_payload(structure):
@@ -335,6 +361,9 @@ class DeepStructPipeline:
             "identifier": result.sequence_record.identifier,
             "reference": structure_payload(result.structure),
             "mutant": structure_payload(result.mutant_structure),
+            "alignment": result.alignment.to_dict() if result.alignment else None,
+            "alignment_run": result.alignment_run,
+            "comparison_mode": "aligned" if result.alignment else "positional",
         }, indent=2, ensure_ascii=False), encoding="utf-8")
         for filename, structure in (("wt_base_pairs.json", result.structure),
                                     ("mut_base_pairs.json", result.mutant_structure)):
@@ -349,6 +378,8 @@ class DeepStructPipeline:
             parameters={
                 "generated_at": result.generated_at.replace(tzinfo=None).isoformat() + "Z",
                 "score_context": "reference",
+                "comparison_mode": "aligned" if result.alignment else "positional",
+                "delta_coordinates": "alignment_column_1based" if result.alignment else "sequence_position_1based",
                 "note": "Geometrie illustrative dependante de la longueur, sans prediction de conformation 3D. Les appariements sont exportes separement.",
                 "score_statistics_wt": wt_stats,
                 "score_statistics_mutant": mutant_stats,

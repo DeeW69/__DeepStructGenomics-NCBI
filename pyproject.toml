@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deepstructgenomics-ncbi"
-version = "0.4.6"
+version = "0.5.0rc1"
 description = "Pipeline ARN/genomique reliant sequence -> structure -> impact a partir des donnees NCBI."
 authors = [
   {name = "DeeW69"}
@@ -27,6 +27,10 @@ research = ["ViennaRNA==2.7.2", "scipy==1.15.3; python_version < '3.11'", "scipy
 
 [project.gui-scripts]
 deepstructgenomics = "deepstructgenomics.gui.app:main"
+
+[project.scripts]
+dsg-align = "deepstructgenomics.alignment.cli:main"
+dsg-benchmark-alignment = "deepstructgenomics.alignment.cli:benchmark_main"
 
 [tool.setuptools.package-data]
 "deepstructgenomics.gui" = ["styles/*.qss"]

@@ -9,6 +9,7 @@ from deepstructgenomics.config import NCBIConfig, PipelineConfig
 from deepstructgenomics.pipeline import DeepStructPipeline, PipelineInput
 from deepstructgenomics.data_sources.ncbi_client import NCBIClient
 from deepstructgenomics.visualization.secondary_view import load_secondary_data
+from deepstructgenomics.alignment.mapping import ComparisonMapping
 
 
 def new_run_directory(workspace, kind):
@@ -70,11 +71,15 @@ def read_rna(path):
     wt, mut = data["reference"], data.get("mutant")
     wt_pairs = set(map(tuple, wt["base_pairs"]))
     mut_pairs = set(map(tuple, mut["base_pairs"])) if mut else set()
-    delta = [b - a for a, b in zip(wt["scores"], mut["scores"])] if mut else []
+    mapping = ComparisonMapping.from_data(data)
+    pairs = mapping.classify_pairs(wt["base_pairs"], mut["base_pairs"] if mut else [])
+    delta = list(mapping.deltas(wt["scores"], mut["scores"]).values()) if mut else []
     metrics = {
         "wt_pairs": len(wt_pairs), "mut_pairs": len(mut_pairs) if mut else None,
-        "lost": len(wt_pairs - mut_pairs) if mut else None,
-        "gained": len(mut_pairs - wt_pairs) if mut else None,
+        "lost": len(pairs["lost"]) + len(pairs["deleted"]) if mut else None,
+        "gained": len(pairs["gained"]) + len(pairs["inserted"]) if mut else None,
+        "deleted_pairs": len(pairs["deleted"]) if mut else None,
+        "inserted_pairs": len(pairs["inserted"]) if mut else None,
         "changed": sum(abs(value) > 1e-9 for value in delta) if mut else None,
         "mean_delta": sum(delta) / len(delta) if delta else None,
         "max_abs_delta": max(map(abs, delta)) if delta else None,
@@ -83,17 +88,21 @@ def read_rna(path):
 
 
 def position_details(data, position):
-    """Use biological positions at the UI boundary, including unequal lengths."""
+    """Inspect one 1-based alignment column, or explicit positional fallback."""
     result = {"position": position}
+    mapping = ComparisonMapping.from_data(data)
+    column = mapping.columns[position - 1]
     for key in ("reference", "mutant"):
         structure = data.get(key)
-        if not structure or not 1 <= position <= len(structure["sequence"]):
+        native = column.reference_position if key == "reference" else column.mutant_position
+        if not structure or native is None:
             result[key] = None
             continue
-        partner = next((j + 1 if i == position - 1 else i + 1
-                        for i, j in structure["base_pairs"] if position - 1 in (i, j)), None)
-        result[key] = {"base": structure["sequence"][position - 1],
-                       "score": structure["scores"][position - 1], "partner": partner}
+        partner = next((j + 1 if i == native - 1 else i + 1
+                        for i, j in structure["base_pairs"] if native - 1 in (i, j)), None)
+        result[key] = {"base": structure["sequence"][native - 1], "position": native,
+                       "score": structure["scores"][native - 1], "partner": partner}
+    result["operation"] = column.operation
     wt, mut = result["reference"], result["mutant"]
     result["delta"] = mut["score"] - wt["score"] if wt and mut else None
     return result
@@ -102,6 +111,7 @@ def position_details(data, position):
 def inspection_details(data, position, radius=4):
     """Describe positional changes; absence never implies a lost pair or an indel."""
     detail = position_details(data, position)
+    mapping = ComparisonMapping.from_data(data)
     changes = []
     wt, mut = detail["reference"], detail["mutant"]
     for key in ("reference", "mutant"):
@@ -112,25 +122,37 @@ def inspection_details(data, position, radius=4):
             entry["partner_label"] = f"{sequence[partner - 1]}{partner}" if partner else "—"
     if wt and mut:
         def pair_text(entry):
-            return f"{entry['base']}{position} ↔ {entry['partner_label']}"
-        if wt["partner"] is not None and wt["partner"] == mut["partner"]:
-            changes.append(("conserved", "Conservée", f"Positions {position} ↔ {wt['partner']} appariées dans les deux prédictions."))
+            return f"{entry['base']}{entry['position']} ↔ {entry['partner_label']}"
+        wp = mapping.to_column["reference"].get(wt["partner"])
+        mp = mapping.to_column["mutant"].get(mut["partner"])
+        if wp is not None and wp == mp:
+            changes.append(("conserved", "Conservée", pair_text(wt) + " / " + pair_text(mut)))
         else:
             if wt["partner"] is not None:
-                changes.append(("lost", "Paire perdue", pair_text(wt) + " disparaît."))
+                deleted = mapping.alignment and mapping.columns[wp - 1].mutant_position is None
+                changes.append(("lost", "Paire supprimée avec la base" if deleted else "Paire perdue", pair_text(wt) + " disparaît."))
             if mut["partner"] is not None:
-                changes.append(("gained", "Nouvelle paire", pair_text(mut) + " apparaît."))
+                inserted = mapping.alignment and mapping.columns[mp - 1].reference_position is None
+                changes.append(("gained", "Nouvelle paire avec insertion" if inserted else "Nouvelle paire", pair_text(mut) + " apparaît."))
         if wt["base"] != mut["base"]:
-            same_length = len(data["reference"]["sequence"]) == len(data["mutant"]["sequence"])
+            same_length = mapping.alignment or len(data["reference"]["sequence"]) == len(data["mutant"]["sequence"])
             changes.append(("substitution", f"Substitution {wt['base']} → {mut['base']}" if same_length
                             else f"Différence {wt['base']} → {mut['base']}",
-                            "Comparaison à la même position, sans alignement."))
+                            "Bases mises en correspondance par alignement." if mapping.alignment else "Comparaison à la même position, sans alignement."))
+    elif mapping.alignment:
+        entry = wt or mut
+        changes.append(("lost" if wt else "gained", "Délétion" if wt else "Insertion",
+                        f"{entry['base']}{entry['position']} · pas d'homologue."))
+        if entry["partner"] is not None:
+            changes.append(("lost" if wt else "gained", "Paire supprimée avec la base" if wt else "Nouvelle paire avec insertion",
+                            f"{entry['base']}{entry['position']} ↔ {entry['partner_label']}"))
     detail["changes"] = changes
     start = max(1, position - radius)
-    end = min(max(len(data[k]["sequence"]) for k in ("reference", "mutant") if data.get(k)), position + radius)
+    end = min(len(mapping.columns), position + radius)
     detail["local_start"], detail["local_end"] = start, end
-    detail["local"] = {key: [data[key]["sequence"][i - 1] if data.get(key) and i <= len(data[key]["sequence"]) else "—"
-                             for i in range(start, end + 1)] for key in ("reference", "mutant")}
+    gap = "-" if mapping.alignment else "—"
+    detail["local"] = {"reference": [c.reference_base or gap for c in mapping.columns[start - 1:end]],
+                       "mutant": [c.mutant_base or gap for c in mapping.columns[start - 1:end]]}
     return detail
 
 

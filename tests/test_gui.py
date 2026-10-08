@@ -21,6 +21,59 @@ def app():
     return application
 
 
+def test_alignment_profiles_task_override_and_virtual_table(app, tmp_path):
+    from deepstructgenomics.alignment.config import AlignmentConfig
+    from deepstructgenomics.gui.sequences import SequencesPage
+    from deepstructgenomics.gui.alignment_table import AlignmentTableModel
+    from deepstructgenomics.alignment.mapping import ComparisonMapping
+    precise = AlignmentConfig(max_cells=5_000_000_000, match_score=0.123456789123)
+    initial = SequencesPage(precise, {})
+    assert initial.advanced.configuration() == precise
+    errors = []
+    initial.failed.connect(errors.append)
+    initial.advanced.fields['max_cells'].setText('abc')
+    initial.submit()
+    assert errors and 'Paramètres avancés' in errors[0]
+    initial.close()
+    page = SequencesPage(AlignmentConfig(max_cells=101), {})
+    assert page.advanced.profile.currentData() is None
+    assert not page.advanced.panel.isVisible()
+    page.fill_demo()
+    page.advanced.profile.setCurrentIndex(2)
+    assert page.parameters()['alignment_config']['max_cells'] == 50_000_000
+    assert '144 cellules' in page.advanced.usage.text()
+    page.advanced.profile.setCurrentIndex(3)
+    page.advanced.fields['max_cells'].setValue(150)
+    page.advanced.fields['match_score'].setValue(3)
+    entry = run_rna(tmp_path, page.parameters())
+    from deepstructgenomics.gui.services import read_rna
+    data, _ = read_rna(entry['path'])
+    page.advanced.set_config(AlignmentConfig())
+    assert data['alignment_run']['configuration']['max_cells'] == 150
+    assert data['alignment']['parameters']['match'] == 3
+    # 7000 rows are exposed without building 77,000 QTableWidgetItems.
+    structure = {'sequence': 'A' * 7000, 'scores': [0.] * 7000, 'base_pairs': []}
+    mapping = ComparisonMapping(structure['sequence'])
+    model = AlignmentTableModel({'reference': structure}, mapping, [['Non appariée'] * 7000])
+    assert model.rowCount() == 7000 and model.row_values.cache_info().currsize == 0
+    assert model.index(6999, 1).data() == '7000'
+    assert model.row_values.cache_info().currsize == 1
+    page.close()
+
+
+def test_overflow_actions_do_not_raise_limit_or_start_job(window):
+    previous = window.sequences.advanced.configuration()
+    window.show_job_error('Alignement trop coûteux : 110 cellules, limite 100.', 'rna')
+    assert len(window.notice.callbacks) == 3
+    window.notice.trigger(1)
+    assert window.sequences.advanced.configuration() == previous
+    assert window.process is None
+    window.show_job_error('Alignement trop coûteux', 'rna')
+    window.notice.trigger(0)
+    assert not window.sequences.align_mutant.isChecked()
+    assert window.process is None
+
+
 @pytest.fixture
 def window(app, tmp_path):
     widget = MainWindow(tmp_path)
@@ -47,11 +100,11 @@ def test_demo_process_to_comparison_and_recent_reopen(app, window):
     assert window.process is not None
     wait_for(app, lambda: window.process is None)
     assert window.pages.currentIndex() == 2, window.message.text()
-    assert window.comparison.table.rowCount() == 12
-    assert window.comparison.table.item(11, 5).text() == "-0.700"
+    assert window.comparison.table.model().rowCount() == 12
+    assert window.comparison.table.model().index(11, 8).data() == "-0.700"
     assert window.comparison.tabs.currentIndex() == 0
     assert window.comparison.tabs.tabText(0) == "Structure secondaire"
-    assert window.comparison.table.item(4, 6).text() == "Boucle terminale"
+    assert window.comparison.table.model().index(4, 9).data() == "Boucle terminale"
     window.comparison.position.setValue(12)
     inspector = window.comparison.inspector
     assert inspector.fields["reference"]["base"].text() == "C"
@@ -146,6 +199,79 @@ def test_ncbi_errors_use_recoverable_states(app, window):
     assert window.history.load() == []
 
 
+def test_aligned_inspector_table_and_reopen(app, window, tmp_path):
+    entry = run_rna(tmp_path, {"sequence": "ACGU", "mutant_sequence": "ACGGU"})
+    window.open_entry(entry)
+    view = window.comparison
+    assert view.tabs.tabText(1) == "Alignement WT/MUT"
+    assert "actif" in view.alignment_note.text()
+    assert view.table.model().rowCount() == 5
+    view.position.setValue(4)
+    assert view.inspector.fields["reference"]["position"].text() == "Pas d'homologue"
+    assert view.inspector.badges[0].title.text() == "Insertion"
+    assert view.table.model().index(3, 1).data() == "—" and view.table.model().index(3, 3).data() == "4"
+    window.resize(1100, 760)
+    app.processEvents()
+    view.position.setValue(5)
+    assert view.inspector.fields["reference"]["position"].text() == "4"
+    assert view.inspector.fields["mutant"]["position"].text() == "5"
+    window.open_rna(entry["path"])
+    assert "actif" in view.alignment_note.text()
+    # A recorded positional fallback must not be silently upgraded on reopen.
+    old = run_rna(tmp_path, {"sequence": "ACGU", "mutant_sequence": "ACGGU", "align_mutant": False})
+    window.open_entry(old)
+    assert "non calculé" in view.alignment_note.text()
+
+
+def test_vtk_aligned_delta_does_not_color_insertions_as_zero(tmp_path):
+    import numpy as np
+    from vtkmodules.vtkRenderingCore import vtkRenderer
+    from deepstructgenomics.visualization.io_structures import resolve_manifest_bundle
+    from deepstructgenomics.visualization.tk_vtk_overlay import OverlayDeltaViewer
+    from deepstructgenomics.alignment.mapping import ComparisonMapping
+    from deepstructgenomics.gui.services import read_rna
+    entry = run_rna(tmp_path, {"sequence": "ACGU", "mutant_sequence": "ACGGU"})
+    data, _ = read_rna(entry["path"])
+    bundle = resolve_manifest_bundle(entry["path"])
+    viewer = OverlayDeltaViewer(bundle["wt_structure"], bundle["mutant_structure"], bundle["wt_score_file"],
+                                bundle["mutant_score_file"], alignment=ComparisonMapping.from_data(data).alignment)
+    viewer.attach_scene(vtkRenderer())
+    scalars = viewer._tooltip_payload["scalars"]
+    assert np.isnan(scalars[3]) and np.isfinite(scalars[[0, 1, 2, 4]]).all()
+    from deepstructgenomics.visualization.tk_vtk_overlay import BasePairOptions
+    for options in ({"enable_links": True}, {"base_pair_config": BasePairOptions(mode="delta")}):
+        with pytest.raises(ValueError, match="3D"):
+            OverlayDeltaViewer(bundle["wt_structure"], bundle["mutant_structure"], bundle["wt_score_file"],
+                               bundle["mutant_score_file"], alignment=ComparisonMapping.from_data(data).alignment, **options)
+
+
+def test_ncbi_cached_selection_to_worker_export_and_reopen(app, window, monkeypatch, tmp_path):
+    import json
+    import requests
+    from deepstructgenomics.data_sources.ncbi_client import NCBIClient
+    from deepstructgenomics.gui.services import preview_ncbi
+    def endpoint(self, name, parameters):
+        if name == "efetch.fcgi":
+            return ">NR_TEST.1 Offline fixture\nACGU\n"
+        response = requests.Response()
+        response.status_code = 200
+        response._content = json.dumps({"result": {"1": {"title": "Offline fixture"}}}).encode()
+        return response
+    monkeypatch.setattr(NCBIClient, "_call_endpoint", endpoint)
+    preview = preview_ncbi(tmp_path, {"accession": "NR_TEST.1"})
+    window.choose_ncbi_reference(preview)
+    window.sequences.mutant_source.setCurrentIndex(1)
+    window.sequences.mutant.setPlainText("ACGGU")
+    window.sequences.submit()
+    wait_for(app, lambda: window.process is None)
+    assert window.comparison.data["alignment"]["counts"]["insertion"] == 1, window.message.text()
+    assert window.notice.state == "success"
+    manifest = window.comparison.manifest
+    window.open_rna(manifest)
+    assert window.comparison.mapping.alignment is not None
+    assert window.close()
+
+
 def test_invalid_input_visible_and_retry_possible(app, window):
     window.start_job("rna", {"sequence": "ACG!"})
     assert window.operation.state == "busy" and not window.operation.isHidden()
@@ -188,7 +314,7 @@ def test_missing_result_and_no_mutant(app, window, tmp_path):
     entry = run_rna(tmp_path, {"sequence": "GGGGAAAACCCC"})
     window.open_entry(entry)
     assert not window.comparison.vtk_button.isEnabled()
-    assert window.comparison.table.item(0, 5).text() == "—"
+    assert window.comparison.table.model().index(0, 8).data() == "—"
     window.open_rna(entry["path"])
     assert window.current_directory == Path(entry["directory"])
 

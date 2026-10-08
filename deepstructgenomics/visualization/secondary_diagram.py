@@ -6,7 +6,8 @@ from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
 from matplotlib.figure import Figure
 
-from .secondary_layout import comparison_layouts
+from .secondary_layout import comparison_layouts, layout_secondary
+from deepstructgenomics.alignment.mapping import ComparisonMapping
 from .secondary_view import COMMON, DECREASE, GAINED, INCREASE, INK, LOST, MUTED, validate_secondary_data
 
 BASE_COLORS = {"A": "#e4bc52", "U": "#7eb8dc", "G": "#92c5a3", "C": "#bd9fd4"}
@@ -38,14 +39,21 @@ def build_structure_diagram(data, *, compact=False):
     from matplotlib import pyplot as plt
     validate_secondary_data(data)
     wt, mut = data["reference"], data.get("mutant")
+    mapping = ComparisonMapping.from_data(data)
     layouts = comparison_layouts(wt, mut)
+    if mapping.alignment and (mapping.alignment.counts["insertion"] or mapping.alignment.counts["deletion"]):
+        layouts = (layout_secondary(len(wt["sequence"]), wt["base_pairs"]),
+                   layout_secondary(len(mut["sequence"]), mut["base_pairs"]), "Sélection par homologue · dispositions propres à chaque structure")
     wt_pairs = set(map(tuple, wt["base_pairs"]))
     mut_pairs = set(map(tuple, mut["base_pairs"])) if mut else set()
-    common = wt_pairs & mut_pairs if mut else wt_pairs
-    lost, gained = (wt_pairs - mut_pairs, mut_pairs - wt_pairs) if mut else (set(), set())
+    changes = mapping.classify_pairs(wt_pairs, mut_pairs)
+    common = changes["conserved"] if mut else mapping.pairs(wt_pairs, "reference")
+    lost, gained = (changes["lost"] | changes["deleted"], changes["gained"] | changes["inserted"]) if mut else (set(), set())
+    delta_by_column = mapping.deltas(wt["scores"], mut["scores"]) if mut else {}
     fig = plt.figure(figsize=(12, 8), facecolor="white", FigureClass=StructureFigure)
     fig.rna_coordinates = {}
     fig.rna_selections = {}
+    fig.rna_column_positions = {}
     fig.rna_contexts = {}
     fig.rna_layout_note = layouts[2]
     grid = fig.add_gridspec(1, 2, left=.055, right=.97, bottom=.15 if compact else .18,
@@ -65,6 +73,8 @@ def build_structure_diagram(data, *, compact=False):
     if mut:
         pair_legend += [Line2D([], [], color=LOST, linewidth=2, linestyle="--", label=f"Perdue ({len(lost)})"),
                         Line2D([], [], color=GAINED, linewidth=2, label=f"Nouvelle ({len(gained)})")]
+    if changes["deleted"] or changes["inserted"]:
+        pair_legend[1].set_label(f"Perdue/supprimée ({len(lost)})")
     fig.legend(handles=pair_legend, loc="upper center", bbox_to_anchor=(.5, .93 if compact else .825),
                ncol=3, frameon=False, fontsize=9)
     all_coords = np.vstack([entry.coordinates for entry in layouts[:2] if entry is not None])
@@ -85,15 +95,17 @@ def build_structure_diagram(data, *, compact=False):
             ax.add_collection(LineCollection(np.stack([coords[:-1], coords[1:]], axis=1),
                                              colors="#aebcc7", linewidths=1.3, zorder=1))
         pairs = [tuple(pair) for pair in structure["base_pairs"]]
+        side = "reference" if column == 0 else "mutant"
+        columns = mapping.to_column[side]
+        pair_columns = [(columns[i + 1], columns[j + 1]) for i, j in pairs]
         ax.add_collection(LineCollection([coords[[i, j]] for i, j in pairs],
-            colors=[COMMON if pair in common else LOST if column == 0 else GAINED for pair in pairs],
-            linestyles=["--" if column == 0 and pair in lost else "-" for pair in pairs], linewidths=2.2, zorder=2))
+            colors=[COMMON if pair in common else LOST if column == 0 else GAINED for pair in pair_columns],
+            linestyles=["--" if column == 0 and pair in lost else "-" for pair in pair_columns], linewidths=2.2, zorder=2))
         # Labels shrink with dense layouts; the toolbar zoom reveals individual bases.
         span = max(float(np.ptp(coords[:, 0])), float(np.ptp(coords[:, 1])), 5.)
         size = max(12., min(360., 12000. / span ** 2))
-        delta = np.array([mut["scores"][i] - wt["scores"][i] if mut and i < min(len(wt["sequence"]), len(mut["sequence"])) else 0.
-                          for i in range(n)])
-        changed = [i for i in range(n) if mut and wt["sequence"][i:i + 1] != mut["sequence"][i:i + 1]]
+        delta = np.array([delta_by_column.get(columns[i + 1], 0.) for i in range(n)])
+        changed = [i for i in range(n) if mut and (lambda c: c.reference_base != c.mutant_base)(mapping.columns[columns[i + 1] - 1])]
         affected = np.flatnonzero(np.abs(delta) > 1e-9)
         halo = None
         if len(affected):
@@ -119,6 +131,7 @@ def build_structure_diagram(data, *, compact=False):
                         ha=alignment, va="center", fontsize=7, color=MUTED)
         selection = ax.scatter([], [], s=size * 2.6, facecolors="none", edgecolors=INK, linewidths=1.8, zorder=5)
         fig.rna_coordinates[ax] = coords
+        fig.rna_column_positions[ax] = [columns[i + 1] for i in range(n)]
         fig.rna_selections[ax] = selection
         fig.rna_contexts[ax] = layout.contexts
 
@@ -149,7 +162,9 @@ def build_structure_diagram(data, *, compact=False):
 
 def select_position(figure, position):
     for axis, coords in figure.rna_coordinates.items():
-        offsets = coords[position - 1:position] if 1 <= position <= len(coords) else np.empty((0, 2))
+        columns = figure.rna_column_positions[axis]
+        native = columns.index(position) if position in columns else None
+        offsets = coords[native:native + 1] if native is not None else np.empty((0, 2))
         figure.rna_selections[axis].set_offsets(offsets)
     figure.canvas.draw_idle()
 
@@ -161,4 +176,4 @@ def picked_position(figure, event, tolerance=16):
     coords = event.inaxes.transData.transform(figure.rna_coordinates[event.inaxes])
     distance = np.linalg.norm(coords - [event.x, event.y], axis=1)
     index = int(np.argmin(distance))
-    return index + 1 if distance[index] <= tolerance else None
+    return figure.rna_column_positions[event.inaxes][index] if distance[index] <= tolerance else None

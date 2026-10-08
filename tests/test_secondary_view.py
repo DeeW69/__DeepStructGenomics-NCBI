@@ -66,7 +66,7 @@ def test_missing_identical_and_unequal_mutants_remain_distinct(pipeline, mutant)
             if len(mutant) == 12:
                 assert all(bar.get_height() == 0 for bar in fig.axes[2].patches)
             else:
-                assert any("sans alignement" in text.get_text() for text in fig.texts)
+                assert any("colonnes d'alignement" in text.get_text() for text in fig.texts)
     finally:
         plt.close(fig)
 

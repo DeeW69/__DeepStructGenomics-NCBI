@@ -5,11 +5,12 @@ import json
 
 from deepstructgenomics.data_sources.ncbi_client import parse_single_fasta
 from deepstructgenomics.pipeline import DeepStructPipeline, PipelineInput
+from deepstructgenomics.alignment.config import AlignmentConfig
 from deepstructgenomics.reporting.report_generator import export_report
 
 
 def run_fasta_batch(path: str | Path, output_dir: str | Path, *, pipeline=None,
-                    top_k=10, min_abs_delta=0.1, base_pair_threshold=0.2):
+                    top_k=10, min_abs_delta=0.1, base_pair_threshold=0.2, alignment_config=None):
     """Write one report bundle per record and a summary; continue invalid records.
 
     Input before the first header and empty files are fatal framing errors.
@@ -46,6 +47,7 @@ def run_fasta_batch(path: str | Path, output_dir: str | Path, *, pipeline=None,
         try:
             identifier, description, sequence = parse_single_fasta(text)
             request = PipelineInput(sequence=sequence, sequence_label=identifier,
+                                    alignment_config=alignment_config or AlignmentConfig(),
                                     top_k=top_k, min_abs_delta=min_abs_delta,
                                     base_pair_threshold=base_pair_threshold)
             result = pipeline.run(request)

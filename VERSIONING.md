@@ -1,6 +1,7 @@
 # Politique de versionnement
 
-La version courante est **0.4.6**, définie dans [pyproject.toml](pyproject.toml).
+La version de développement est **0.5.0rc1**, définie dans [pyproject.toml](pyproject.toml),
+affichée **v0.5.0-rc1** dans la documentation. La dernière release stable reste **v0.4.6**.
 Le [changelog](CHANGELOG.md) décrit les changements et les
 [releases GitHub](https://github.com/DeeW69/__DeepStructGenomics-NCBI/releases)
 regroupent les publications et leurs artefacts.
@@ -51,7 +52,7 @@ Si les dépendances changent, mettre à jour leurs déclarations et les verrous
 concernés dans le même commit. Le socle utilise `requirements-lock.txt` ;
 ViennaRNA/SciPy utilisent `requirements-research-lock.txt`, contraint par le socle.
 L'interface desktop facultative utilise `requirements-gui-lock.txt`. Sa première
-version est préparée pour v0.5.0 ; les changements sur `main` restent « Non publié ».
+version est préparée pour v0.5.0-rc1 ; les changements sur `main` restent « Non publié ».
 Voir le [guide des dépendances](docs/dependencies.md).
 
 ## Validation et publication
@@ -76,8 +77,9 @@ La [checklist](docs/release_checklist.md) complète cette procédure.
 
 ## Préversions et corrections
 
-Pour une préversion : paquet `0.5.0a1`, `0.5.0b1` ou `0.5.0rc1`, tag correspondant
-avec `v`, release marquée **Pre-release** et limites explicites.
+Pour cette candidate : paquet PEP 440 `0.5.0rc1`, futur tag `v0.5.0-rc1`, release
+marquée **Pre-release** et limites explicites. Ni tag ni release ne sont créés
+automatiquement par la préparation du paquet. Voir les [notes de préparation](docs/releases/v0.5.0-rc1.md).
 
 Une version publiée conserve son tag et ses artefacts. Toute correction ultérieure
 utilise un nouveau numéro ; ne pas déplacer un tag publié ni réutiliser une version

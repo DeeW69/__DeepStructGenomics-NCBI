@@ -1104,6 +1104,7 @@ class OverlayDeltaViewer(OverlayBase):
         link_min_distance: Optional[float] = None,
         link_max_distance: Optional[float] = None,
         glyph_scale: float = 1.0,
+        alignment=None,
     ) -> None:
         super().__init__(
             title="DeepStructGenomics - Overlay Delta",
@@ -1126,13 +1127,27 @@ class OverlayDeltaViewer(OverlayBase):
         if not np.isfinite(glyph_scale) or glyph_scale <= 0:
             raise ValueError("glyph_scale doit etre positif et fini.")
         self.glyph_scale = float(glyph_scale)
+        self.alignment = alignment
+        if alignment is not None and enable_links:
+            raise ValueError("Connecteurs 3D entre structures indisponibles avec alignement ; désactivez les liens.")
+        if (alignment is not None and (alignment.counts["insertion"] or alignment.counts["deletion"])
+                and base_pair_config and (base_pair_config.mode != "lines" or base_pair_config.threshold > 0)):
+            raise ValueError("Avec des indels, utilisez les paires 3D en lignes sans seuil ; consultez les deltas dans la vue 2D.")
 
     def _build_scene(self, renderer: vtkRenderer) -> None:
         wt_structure = load_structure(self.wt_path)
         mut_structure = load_structure(self.mut_path)
         wt_scores = load_score_table(self.wt_scores_path)
         mut_scores = load_score_table(self.mut_scores_path)
-        delta_scores = compute_delta_scores(wt_scores, mut_scores)
+        tooltip_wt = wt_scores
+        if self.alignment:
+            if len(mut_structure.atoms) != len(self.alignment.mut_to_ref) or len(wt_structure.atoms) != len(self.alignment.ref_to_mut):
+                raise ValueError("La vue 3D alignée requiert les structures schématiques exportées avec cette analyse.")
+            tooltip_wt = ScoreTable(position_scores={m: wt_scores.position_scores[r] for m, r in self.alignment.mut_to_ref.items() if r is not None})
+            delta_scores = ScoreTable(position_scores={m: mut_scores.position_scores[m] - tooltip_wt.position_scores[m]
+                                                      for m in tooltip_wt.position_scores})
+        else:
+            delta_scores = compute_delta_scores(wt_scores, mut_scores)
         stats = compute_score_statistics(delta_scores)
         mut_score_scalars = map_scores_to_atoms(mut_structure, mut_scores, clamp_min=0.0, clamp_max=1.0)
         mut_score_lookup = self._scalars_by_position(mut_structure, mut_score_scalars)
@@ -1157,9 +1172,16 @@ class OverlayDeltaViewer(OverlayBase):
         )
 
         delta_scalars = map_scores_to_atoms(mut_structure, delta_scores, clamp_min=-1.0, clamp_max=1.0)
-        if len(delta_scalars):
-            raw_min = float(delta_scalars.min())
-            raw_max = float(delta_scalars.max())
+        if self.alignment:
+            for index, atom in enumerate(mut_structure.atoms):
+                native = resolve_point_metadata(mut_structure, index)[0]
+                delta_scalars[index] = delta_scores.position_scores.get(native, np.nan)
+                if native in tooltip_wt.position_scores:
+                    tooltip_wt.residue_scores[atom.residue_key.as_compact()] = tooltip_wt.position_scores[native]
+        finite_delta = delta_scalars[np.isfinite(delta_scalars)]
+        if len(finite_delta):
+            raw_min = float(finite_delta.min())
+            raw_max = float(finite_delta.max())
             abs_max = max(abs(raw_min), abs(raw_max), 1e-3)
             scalar_range = (-abs_max, abs_max)
         else:
@@ -1175,6 +1197,7 @@ class OverlayDeltaViewer(OverlayBase):
             )
 
         lut = self._lut_diverging()
+        lut.SetNanColor(.52, .58, .64, 1.)
         mut_actor = self._make_glyph_actor(
             mut_poly,
             sphere_radius=1.2 * self.glyph_scale,
@@ -1212,7 +1235,7 @@ class OverlayDeltaViewer(OverlayBase):
             "structure": mut_structure,
             "scalars": delta_scalars,
             "label": "delta",
-            "wt_scores": wt_scores,
+            "wt_scores": tooltip_wt,
             "mut_scores": mut_scores,
             "clamp": (-1.0, 1.0),
             "scalar_range": scalar_range,

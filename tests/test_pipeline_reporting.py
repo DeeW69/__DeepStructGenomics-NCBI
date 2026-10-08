@@ -206,7 +206,7 @@ def test_missing_mutant_is_distinct_from_zero_impact(pipeline, mutant_sequence):
 
 def test_different_lengths_explain_positional_comparison(pipeline):
     result = pipeline.run_and_export(
-        PipelineInput(sequence=REFERENCE, mutant_sequence=REFERENCE + "AAA")
+        PipelineInput(sequence=REFERENCE, mutant_sequence=REFERENCE + "AAA", align_mutant=False)
     )
 
     summary = result.impact_summary

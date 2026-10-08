@@ -9,7 +9,7 @@ Outils de recherche pour analyser des séquences ARN, comparer leurs structures
 secondaires et explorer des contacts génomiques Hi-C. Les séquences proviennent
 du NCBI, de fichiers FASTA ou d'une saisie directe.
 
-**Version actuelle : [v0.4.6](docs/releases/v0.4.6.md)** — 7 octobre 2026.
+**Dernière release stable : [v0.4.6](docs/releases/v0.4.6.md)** — 7 octobre 2026.
 Cette release ajoute le benchmark ARN expérimental de v0.4.5 et l'analyse Hi-C
 avancée de v0.4.6. Les résultats restent des analyses de recherche, sans usage clinique.
 
@@ -17,10 +17,11 @@ avancée de v0.4.6. Les résultats restent des analyses de recherche, sans usage
 [Benchmark ARN](#benchmark-arn) · [Hi-C](#analyse-hi-c) ·
 [Documentation](#documentation-et-contributions) · [Versions](#série-v04x)
 
-## Interface desktop — préparation v0.5.0
+## Interface desktop — préparation v0.5.0-rc1
 
 Disponible sur `main`, **pas encore publiée en release** : une interface PySide6
 regroupe **Accueil → Séquences → Comparaison → Hi-C** autour du moteur existant.
+Le paquet en préparation porte la version `0.5.0rc1`.
 
 ```bash
 python -m pip install --require-hashes --only-binary=:all: -r requirements-gui-lock.txt
@@ -37,6 +38,8 @@ la navigation. Les résultats sont enregistrés dans `outputs_gui`.
 - Vue principale ARN 2D : tiges, boucles, bases A/U/G/C et comparaison WT/MUT.
 - Séquence et contextes structuraux, deltas, sélection synchronisée et 3D schématique à la demande.
 - Inspecteur WT/MUT : base, score, partenaire, contexte, badges de paires et séquence locale surlignée.
+- Alignement global WT/MUT : substitutions, insertions et délétions ; sélection par homologue, deltas et paires comparés via les correspondances.
+- Configuration commune `.env` / CLI / GUI, profils avancés 4 M / 25 M / 50 M / personnalisé, paramètres effectifs enregistrés et table WT/MUT virtualisée.
 - Hi-C : contacts équilibrés, boucles candidates et reconstruction inférée.
 - Historique local, réouverture des résultats, figures PNG et accès aux rapports.
 - Accueil avec raccourcis d'import et métriques de la dernière analyse ARN consultée.
@@ -46,6 +49,21 @@ la navigation. Les résultats sont enregistrés dans `outputs_gui`.
 
 La vue ARN 3D reste **schématique** ; aucune conformation moléculaire ni énergie
 MFE n'est déduite de son affichage. [Guide desktop](docs/desktop.md).
+L'alignement est borné et signale les ex æquo ; les anciennes analyses restent
+positionnelles avec un avertissement. [Paramètres, coordonnées et migration](docs/alignment.md).
+
+Pour tester uniquement l'alignement, sans repliement ARN :
+
+```powershell
+python scripts/run_alignment.py --wt ACGU --mut ACGGU
+python scripts/run_alignment.py --wt-fasta wt.fasta --mut-fasta mut.fasta
+python scripts/benchmark_alignment.py --length 7070 --max-cells 50000000
+```
+
+Le benchmark produit des séquences **synthétiques** ; il ne constitue pas une
+analyse biologique. Le défaut reste **4 M de cellules**, même si un profil étendu
+est choisi pour un essai. [Configuration, `.env.example`, profils et commandes](docs/configuration.md)
+· [Mesures Windows](docs/benchmarks/alignment_windows.md).
 
 ## Installation
 
@@ -179,6 +197,7 @@ la comparaison des reconstructions à des mesures indépendantes.
 - [ ] v0.5.0 : stabiliser l'interface sur les postes cibles et publier la première GUI.
 - [x] Recherche NCBI avec aperçu, sélection WT et tableau de bord des résultats.
 - [x] États visuels communs et inspecteur ARN enrichi, sans changement du moteur scientifique.
+- [x] Alignement global WT/MUT, gestion des gaps, exports et réouverture pour la rc1.
 - [ ] Recette utilisateur v0.5.0 : parcours complets sur les postes cibles, sans aide du README.
 - [ ] v0.5.x : lots FASTA, filtres NCBI avancés et paramètres scientifiques dans l'interface.
 - [ ] v0.5.x : sélection croisée Hi-C, gestion de projets et comparaison de plusieurs analyses.
@@ -190,6 +209,7 @@ la comparaison des reconstructions à des mesures indépendantes.
 | --- | --- |
 | [Pipeline](docs/pipeline.md) | Sources, cache, lots, rapports et visualisation. |
 | [Desktop](docs/desktop.md) | Interface PySide6, parcours, exports et limites. |
+| [Alignement WT/MUT](docs/alignment.md) | Correspondances, indels, limites et migration des exports. |
 | [Démo](docs/demo.md) | Exemple ARN reproductible et résultats attendus. |
 | [Coordonnées](docs/coordinates.md) | Conventions depuis 0 ou 1. |
 | [Viewers](docs/visualization_3d.md) | Modes 3D, manifests et export PNG. |
